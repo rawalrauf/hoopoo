@@ -1,2 +1,2 @@
 # Includes lazyvim and the themes
-omarchy-nvim-setup
+hoopoo-nvim-setup
