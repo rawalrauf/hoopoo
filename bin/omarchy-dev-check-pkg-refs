@@ -11,7 +11,13 @@ echo "Fetching omarchy package list..."
 omarchy_pkgs=$(curl -s "$OMARCHY_DB_URL" | zstd -d 2>/dev/null | tar -t 2>/dev/null | grep "/$" | sed 's|/||' | sed 's|-[^-]*-[^-]*$||' | sort -u)
 
 echo "Fetching hoopoo package list..."
-hoopoo_pkgs=$(curl -sL "$HOOPOO_RELEASE_URL" | zstd -d 2>/dev/null | tar -t 2>/dev/null | grep "/$" | sed 's|/||' | sed 's|-[^-]*-[^-]*$||' | sort -u)
+hoopoo_pkgs=$(curl -s "https://api.github.com/repos/rawalrauf/hoopoo-pkgs/releases/tags/stable" | python3 -c "
+import sys,json,re
+d=json.load(sys.stdin)
+for a in d.get('assets',[]):
+    if a['name'].endswith('.pkg.tar.zst') and 'debug' not in a['name']:
+        print(re.sub(r'-[^-]+-[^-]+-[^-]+\.pkg\.tar\.zst\$','',a['name']))
+" 2>/dev/null | sort -u)
 
 echo ""
 printf "%-40s %-10s %-12s %s\n" "PACKAGE" "IN_HOOPOO" "IN_OFFICIAL" "REFERENCED_IN"
