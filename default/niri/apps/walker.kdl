@@ -1,0 +1,6 @@
+layer-rule {
+    match namespace="^launcher$"
+    opacity 0.20
+    geometry-corner-radius 12
+}
+

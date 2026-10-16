@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# hoopoo:summary=Toggle niri flags by copying KDL snippets into the toggles/niri directory.
+# hoopoo:args=[--enabled-notification <text>] [--disabled-notification <text>] [--invert] <flag-name>
+
+ENABLED_NOTIFICATION=""
+DISABLED_NOTIFICATION=""
+INVERT=false
+
+while [[ $# -gt 1 ]]; do
+  case $1 in
+    --enabled-notification) ENABLED_NOTIFICATION="$2"; shift 2 ;;
+    --disabled-notification) DISABLED_NOTIFICATION="$2"; shift 2 ;;
+    --invert) INVERT=true; shift ;;
+    *) break ;;
+  esac
+done
+
+FLAG_NAME="$1"
+FLAG="$HOME/.local/state/hoopoo/toggles/niri/$FLAG_NAME.kdl"
+FLAG_SOURCE="$HOOPOO_PATH/default/niri/toggles/$FLAG_NAME.kdl"
+
+if [[ -f $FLAG ]]; then
+  rm "$FLAG"
+  if [[ $INVERT == true ]]; then
+    [[ -n $ENABLED_NOTIFICATION ]] && notify-send -u low "$ENABLED_NOTIFICATION"
+  else
+    [[ -n $DISABLED_NOTIFICATION ]] && notify-send -u low "$DISABLED_NOTIFICATION"
+  fi
+elif [[ -f $FLAG_SOURCE ]]; then
+  mkdir -p "$(dirname "$FLAG")"
+  cp "$FLAG_SOURCE" "$FLAG"
+  if [[ $INVERT == true ]]; then
+    [[ -n $DISABLED_NOTIFICATION ]] && notify-send -u low "$DISABLED_NOTIFICATION"
+  else
+    [[ -n $ENABLED_NOTIFICATION ]] && notify-send -u low "$ENABLED_NOTIFICATION"
+  fi
+else
+  echo "Flag not found: $FLAG_NAME"
+  exit 1
+fi
+
+hoopoo-restart-niri

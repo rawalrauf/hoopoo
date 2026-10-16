@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# hoopoo:summary=Toggle window gaps on/off in niri
+
+hoopoo-niri-toggle \
+  --enabled-notification "  Window gaps enabled" \
+  --disabled-notification "  Window gaps disabled" \
+  gaps-enabled

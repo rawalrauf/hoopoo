@@ -1,0 +1,88 @@
+@import "../hoopoo/current/theme/waybar.css";
+* {
+    background-color: @background;
+    color: @foreground;
+
+    font-family: '0xProto Nerd Font';
+    border: none;
+    border-radius: 0;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+#cpu,
+#memory,
+#workspaces,
+#taskbar,
+#window,
+#clock,
+#battery,
+#pulseaudio,
+#network,
+#bluetooth,
+#backlight {
+    padding: 5px 10px;
+    margin: 0px 0px;
+    margin-top: 2px;
+}
+
+#workspaces {
+    margin-right:10px;
+    padding: 0px 10px;
+}
+
+#custom-hoopoo {
+  margin: 0 10px;
+}
+
+
+#custom-screenrecording-indicator,
+#custom-idle-indicator,
+#custom-notification-silencing-indicator,
+#custom-update,
+#custom-weather,
+#custom-voxtype {
+  font-size: 12px;
+  min-width: 12px;
+  margin: 0 5px;
+}
+
+#custom-screenrecording-indicator.active,
+#custom-idle-indicator.active,
+#custom-notification-silencing-indicator.active,
+#custom-voxtype.recording {
+  color: #a55555;
+}
+
+#custom-weather.unavailable {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+#battery.critical {
+  color: #cc2424;
+}
+
+#workspaces button {
+    all:initial;
+    padding: 0.05rem;
+    margin-right:10px;
+    min-height: 0;
+}
+
+#taskbar{
+  padding: 0;
+}
+
+#taskbar button{
+  all:initial;
+  padding: 0 10px ;
+}
+
+#taskbar button.active {
+    opacity: 0;
+    padding: 0;
+    margin-left:-20px;
+}
+

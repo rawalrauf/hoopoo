@@ -1,0 +1,143 @@
+#!/bin/bash
+
+# hoopoo:summary=Display niri keybindings defined in your configuration using walker for an interactive search menu.
+
+BINDING_FILES=(
+  "$HOME/.local/share/hoopoo/default/niri/bindings/utilities.kdl"
+  "$HOME/.local/share/hoopoo/default/niri/bindings/applications.kdl"
+  "$HOME/.local/share/hoopoo/default/niri/bindings/tiling.kdl"
+  "$HOME/.local/share/hoopoo/default/niri/bindings/media.kdl"
+  "$HOME/.config/niri/bindings.kdl"
+)
+
+cache_key() {
+  {
+    printf 'v1\n'
+    for f in "${BINDING_FILES[@]}"; do
+      [[ -f $f ]] && stat -c '%Y %n' "$f"
+    done
+  } | sha256sum | awk '{print $1}'
+}
+
+parse_niri_bindings() {
+  for file in "${BINDING_FILES[@]}"; do
+    [[ -f $file ]] || continue
+    # Strip block comments /- ... -/ and line comments // using awk
+    awk '
+      /\/\-/ { in_block=1 }
+      in_block { if (/\-\//) { in_block=0 } next }
+      { gsub(/\/\/.*$/, ""); print }
+    ' "$file" | while IFS= read -r line; do
+      if [[ $line =~ ^[[:space:]]*([A-Za-z0-9+]+)[[:space:]].*hotkey-overlay-title=\"([^\"]+)\" ]]; then
+        key="${BASH_REMATCH[1]}"
+        desc="${BASH_REMATCH[2]}"
+        key=$(echo "$key" | sed 's/+/ + /g; s/  */ /g; s/^ //; s/ $//')
+        action=$(echo "$line" | grep -oP '(?<=\{)[^}]+' | sed 's/;//g' | xargs)
+        printf '%s\t%s\t%s\n' "$(printf '%-35s → %s' "$key" "$desc")" "$desc" "$action"
+      fi
+    done
+  done
+}
+
+prioritize_entries() {
+  awk -F'\t' '
+  {
+    line = $1
+    prio = 50
+    if (match(line, /Terminal/))           prio = 0
+    if (match(line, /Application/))        prio = 1
+    if (match(line, /Hoopoo Menu/))       prio = 2
+    if (match(line, /Apps Menu/))          prio = 3
+    if (match(line, /Lock/))               prio = 4
+    if (match(line, /Emoji/))              prio = 5
+    if (match(line, /Clipboard/))          prio = 6
+    if (match(line, /Screenshot/))         prio = 7
+    if (match(line, /close/))              prio = 8
+    if (match(line, /overview/))           prio = 9
+    if (match(line, /fullscreen/))         prio = 10
+    if (match(line, /maximize/))           prio = 11
+    if (match(line, /floating/))           prio = 12
+    if (match(line, /opacity/))            prio = 13
+    if (match(line, /focus.*column/))      prio = 20
+    if (match(line, /focus.*window/))      prio = 21
+    if (match(line, /focus.*monitor/))     prio = 22
+    if (match(line, /focus.*workspace/))   prio = 23
+    if (match(line, /move.*column/))       prio = 30
+    if (match(line, /move.*window/))       prio = 31
+    if (match(line, /move.*workspace/))    prio = 32
+    if (match(line, /width/))              prio = 40
+    if (match(line, /height/))             prio = 41
+    if (match(line, /volume/))             prio = 60
+    if (match(line, /brightness/))         prio = 61
+    if (match(line, /play|pause|media/))   prio = 62
+    if (match(line, /quit/))               prio = 90
+    if (match(line, /power/))              prio = 91
+    printf "%d\t%s\n", prio, $0
+  }' |
+  sort -k1,1n -k2,2 |
+  cut -f2-
+}
+
+output_binding_records_uncached() {
+  parse_niri_bindings | sort -u | prioritize_entries
+}
+
+output_binding_records() {
+  local cache_dir cache_name cache_file
+
+  cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/hoopoo"
+  cache_name="keybindings-$(cache_key).records"
+  cache_file="$cache_dir/$cache_name"
+
+  if [[ -s $cache_file ]]; then
+    cat "$cache_file"
+    return
+  fi
+
+  mkdir -p "$cache_dir"
+  local tmp
+  tmp=$(mktemp "$cache_dir/keybindings.XXXXXX")
+
+  if output_binding_records_uncached > "$tmp"; then
+    mv "$tmp" "$cache_file"
+    find "$cache_dir" -maxdepth 1 -name 'keybindings-*.records' ! -name "$cache_name" -delete 2>/dev/null || true
+    cat "$cache_file"
+  else
+    rm -f "$tmp"
+    output_binding_records_uncached
+  fi
+}
+
+dispatch_binding() {
+  local action="$1"
+  [[ -z $action ]] && return
+
+  # Built-in niri action
+  if [[ ! $action =~ spawn ]]; then
+    local niri_action
+    niri_action=$(echo "$action" | xargs)
+    niri msg action $niri_action 2>/dev/null && return
+  fi
+
+  # spawn-sh or spawn command
+  local cmd
+  cmd=$(echo "$action" | sed 's/spawn-sh //; s/spawn //; s/"//g' | xargs)
+  [[ -n $cmd ]] && niri msg action spawn-sh -- "$cmd" 2>/dev/null
+}
+
+if [[ $1 == "--print" || $1 == "-p" ]]; then
+  output_binding_records | cut -f1
+else
+  records=$(output_binding_records)
+  monitor_height=$(niri msg --json focused-output 2>/dev/null | jq -r '.logical_height // 1080')
+  menu_height=$((monitor_height * 38 / 100))
+
+  selection=$(cut -f1 <<<"$records" |
+    walker --dmenu -p 'Keybindings' --width 945 --height "$menu_height")
+
+  if [[ -n $selection ]]; then
+    record=$(awk -F'\t' -v sel="$selection" '$1 == sel { print; exit }' <<<"$records")
+    action=$(printf '%s' "$record" | cut -f3-)
+    dispatch_binding "$action"
+  fi
+fi

@@ -1,0 +1,227 @@
+{
+  "layer": "top",
+  "position": "top",
+  "mod": "dock",
+  "exclusive": true,
+  "passthrough": false,
+  "gtk-layer-shell": true,
+  "height": 25,
+  "modules-left": [
+    "niri/workspaces",
+    "wlr/taskbar",
+    "niri/window"
+  ],
+  "modules-center": [
+    "cpu",
+    "memory",
+    "custom/weather",
+    "custom/update",
+    "custom/voxtype",
+    "custom/screenrecording-indicator",
+    "custom/idle-indicator",
+    "custom/notification-silencing-indicator"
+  ],
+  "modules-right": [
+    "bluetooth",
+    "network",
+    "backlight",
+    "pulseaudio",
+    "pulseaudio#microphone",
+    "battery",
+    "clock",
+    "custom/hoopoo",
+  ],
+"niri/workspaces": {
+  "format": "{icon} {index}",
+  "format-icons": {
+    "focused": "󰔰",
+    "urgent": "󰀦",
+    "default": ""
+  }
+},
+  "wlr/taskbar": {
+    "format": "{icon}",
+    "all-outputs": false,
+    "active-first": true,
+    "icon-size": 17,
+    "tooltip": true,
+    "tooltip-format": "{title} | {app_id}",
+    "on-click": "activate",
+    "on-click-middle": "close",
+    "ignore-list": [
+      "ffplay", //webcamoverlay
+      "at.yrlf.wl_mirror" //mirror window
+      //"com.mitchellh.ghostty",
+      //"Alacritty",
+      //"foot",
+      //"kitty",
+      //"org.wezfurlong.wezterm"
+    ],
+  },
+  "niri/window": {
+    "format": "{title}",
+    "tooltip": false,
+    "icon": true,
+    "icon-size": 17,
+    "interval": 1,
+    "separate-outputs": true,
+
+  },
+  "cpu": {
+    "interval": 2,
+    "format": "  {icon0}{icon1}{icon2}{icon3} {usage:>2}%",
+    "tooltip": false,
+    "on-click": "hoopoo-launch-system-monitor",
+    "format-icons": [
+      "▁",
+      "▂",
+      "▃",
+      "▄",
+      "▅",
+      "▆",
+      "▇",
+      "█"
+    ],
+  },
+  "memory": {
+    "interval": 30,
+    "tooltip": false,
+    "on-click": "hoopoo-launch-system-monitor",
+    "format": "  {used:0.1f}G",
+  },
+  "clock": {
+    "format": "{:%I:%M %p}",
+    "tooltip-format": "<tt><small>{calendar}</small></tt>",
+    "interval": 60,
+    "calendar": {
+      "format": {
+        "today": "<span color='#ffa500'><b><u>{}</u></b></span>"
+      }
+    },
+  },
+  "backlight": {
+    "device": "intel_backlight",
+    "tooltip":false,
+    "format": " {percent}%",
+    "on-scroll-up": "",
+    "on-scroll-down": "",
+  },
+   "battery": {
+    "interval": 10,
+    "format": "{icon} {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-icons": [
+      "󰂎",
+      "󰁺",
+      "󰁻",
+      "󰁼",
+      "󰁽",
+      "󰁾",
+      "󰁿",
+      "󰂀",
+      "󰂁",
+      "󰂂",
+      "󰁹"
+    ],
+    "states": {
+      "critical": 15
+    },
+    "on-click": "hoopoo-menu power",
+  },
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "tooltip": false,
+    "format-muted": " Muted",
+    "on-click": "hoopoo-launch-audio",
+    "on-scroll-up": "",
+    "on-scroll-down": "",
+    "format-icons": {
+      "headphone": "",
+      "hands-free": "",
+      "headset": "",
+      "phone": "",
+      "portable": "",
+      "default": [
+        " "
+      ],
+    },
+  },
+  "pulseaudio#microphone": {
+    "format": "{format_source}",
+    "format-source": " {volume}%",
+    "format-source-muted": "  Muted",
+    "on-click": "hoopoo-audio-input-mute",
+    "on-scroll-up": "pamixer --default-source -d 5",
+    "on-scroll-down": "pamixer --default-source -i 5",
+  },
+  "network": {
+    "on-click":"hoopoo-launch-wifi",
+    "format-wifi": "󰖩 {signalStrength}%",
+    "format-ethernet": "󰈀 100%",
+    "tooltip-format": "{essid} - {ifname} via {gwaddr}",
+    "format-linked": "󰖪",
+    "format-disconnected": "󰖪",
+  },
+  "custom/screenrecording-indicator": {
+    "on-click": "hoopoo-capture-screenrecording",
+    "exec": "$HOOPOO_PATH/default/waybar/indicators/screen-recording.sh",
+    "signal": 8,
+    "return-type": "json"
+  },
+  "custom/idle-indicator": {
+    "on-click": "hoopoo-toggle-idle",
+    "exec": "$HOOPOO_PATH/default/waybar/indicators/idle.sh",
+    "signal": 9,
+    "return-type": "json"
+  },
+  "custom/notification-silencing-indicator": {
+    "on-click": "hoopoo-toggle-notification-silencing",
+    "exec": "$HOOPOO_PATH/default/waybar/indicators/notification-silencing.sh",
+    "signal": 10,
+    "return-type": "json"
+  },
+  "custom/weather": {
+    "exec": "$HOOPOO_PATH/default/waybar/weather.sh",
+    "return-type": "json",
+    "interval": 60,
+    "tooltip": false,
+    "on-click": "notify-send -u low \"$(hoopoo-weather-status)\""
+  },
+  "custom/update": {
+    "format": "",
+    "exec": "hoopoo-update-available",
+    "on-click": "hoopoo-launch-floating-terminal-with-presentation hoopoo-update",
+    "tooltip-format": "Hoopoo update available",
+    "signal": 7,
+    "interval": 21600
+  },
+  "custom/voxtype": {
+    "exec": "hoopoo-voxtype-status",
+    "return-type": "json",
+    "format": "{icon}",
+    "format-icons": {
+      "idle": "",
+      "recording": "󰍬",
+      "transcribing": "󰔟"
+    },
+    "tooltip": true,
+    "on-click-right": "hoopoo-voxtype-config",
+    "on-click": "hoopoo-voxtype-model"
+  },
+  "bluetooth": {
+    "format": " {status}",
+    "format-disabled": "", // an empty format will hide the module
+    "format-connected": " {num_connections}",
+    "tooltip-format": "{device_alias}",
+    "tooltip-format-connected": " {device_enumerate}",
+    "tooltip-format-enumerate-connected": "{device_alias}",
+    "on-click": "hoopoo-launch-bluetooth",
+  },
+  "custom/hoopoo": {
+    "format": "<span font='hoopoo'>\ue800</span>",
+    "on-click": "hoopoo-menu",
+    "on-click-right": "xdg-terminal-exec",
+    "tooltip-format": "Hoopoo Menu\n\nMod + Alt + Space"
+  },
+}

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# hoopoo:summary=Launch a TUI command in default terminal
+# hoopoo:args=[--app-id=ID] <command> [args...]
+
+if (($# == 0)); then
+  echo "Usage: hoopoo-launch-tui [--app-id=ID] <command> [args...]"
+  exit 1
+fi
+
+APP_ID=""
+TITLE=""
+if [[ "$1" == --app-id=* ]]; then
+  APP_ID="${1#--app-id=}"
+  shift
+fi
+
+if [[ "$1" == --title=* ]]; then
+  TITLE="${1#--title=}"
+  shift
+fi
+
+CMD_NAME=$(basename "$1")
+if [[ -z "$APP_ID" ]]; then
+  APP_ID="org.hoopoo.$CMD_NAME"
+fi
+if [[ -z "$TITLE" ]]; then
+  TITLE="$CMD_NAME"
+fi
+
+exec setsid uwsm-app -- xdg-terminal-exec --app-id="$APP_ID" --title="$TITLE" -e "$@"

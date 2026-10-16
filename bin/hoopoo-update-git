@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# hoopoo:summary=Pull the latest Hoopoo git changes
+
+set -e
+
+echo -e "\e[32mUpdate Hoopoo\e[0m"
+
+hoopoo-update-time
+
+git -C $HOOPOO_PATH pull --autostash
+git -C $HOOPOO_PATH --no-pager diff --check || git -C $HOOPOO_PATH reset --merge
+
+hoopoo-restart-niri

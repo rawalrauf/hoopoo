@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# hoopoo:summary=Launch the Hoopoo wifi controls (provided by the Impala TUI).
+
+rfkill unblock wifi
+hoopoo-launch-or-focus-tui --title="Wi-Fi" impala

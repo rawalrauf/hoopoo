@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Reload the niri compositor configuration
+
+niri msg action load-config-file

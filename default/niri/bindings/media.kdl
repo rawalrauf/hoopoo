@@ -1,0 +1,43 @@
+binds {
+    // Volume Control
+    XF86AudioRaiseVolume  allow-when-locked=true hotkey-overlay-title="Volume Up" { spawn-sh "hoopoo-swayosd-client --output-volume raise"; }
+    XF86AudioLowerVolume  allow-when-locked=true hotkey-overlay-title="Volume Down" { spawn-sh "hoopoo-swayosd-client --output-volume lower"; }
+    XF86AudioMute         allow-when-locked=true hotkey-overlay-title="Toggle Mute" { spawn-sh "hoopoo-swayosd-client --output-volume mute-toggle"; }
+    XF86AudioMicMute      allow-when-locked=true hotkey-overlay-title="Toggle Microphone Mute" { spawn-sh "hoopoo-audio-input-mute"; }
+
+    // Precise 1% volume
+    Alt+XF86AudioRaiseVolume allow-when-locked=true hotkey-overlay-title="Volume Up (Precise)" { spawn-sh "hoopoo-swayosd-client --output-volume +1"; }
+    Alt+XF86AudioLowerVolume allow-when-locked=true hotkey-overlay-title="Volume Down (Precise)" { spawn-sh "hoopoo-swayosd-client --output-volume -1"; }
+
+    // Brightness Control
+    XF86MonBrightnessUp   allow-when-locked=true hotkey-overlay-title="Brightness Up" { spawn-sh "hoopoo-brightness-display +5%"; }
+    XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Brightness Down" { spawn-sh "hoopoo-brightness-display 5%-"; }
+    Shift+XF86MonBrightnessUp   allow-when-locked=true hotkey-overlay-title="Brightness Maximum" { spawn-sh "hoopoo-brightness-display 100%"; }
+    Shift+XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Brightness Minimum" { spawn-sh "hoopoo-brightness-display 1%"; }
+
+    // Precise 1% brightness
+    Alt+XF86MonBrightnessUp   allow-when-locked=true hotkey-overlay-title="Brightness Up (Precise)" { spawn-sh "hoopoo-brightness-display +1%"; }
+    Alt+XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Brightness Down (Precise)" { spawn-sh "hoopoo-brightness-display 1%-"; }
+
+    // Keyboard Brightness
+    XF86KbdBrightnessUp   allow-when-locked=true hotkey-overlay-title="Keyboard Brightness Up" { spawn-sh "hoopoo-brightness-keyboard up"; }
+    XF86KbdBrightnessDown allow-when-locked=true hotkey-overlay-title="Keyboard Brightness Down" { spawn-sh "hoopoo-brightness-keyboard down"; }
+    XF86KbdLightOnOff     allow-when-locked=true hotkey-overlay-title="Keyboard Backlight Cycle" { spawn-sh "hoopoo-brightness-keyboard cycle"; }
+
+    // Touchpad hardware keys
+    XF86TouchpadToggle allow-when-locked=true hotkey-overlay-title=null { spawn-sh "hoopoo-toggle-touchpad"; }
+    XF86TouchpadOn     allow-when-locked=true hotkey-overlay-title=null { spawn-sh "hoopoo-toggle-touchpad on"; }
+    XF86TouchpadOff    allow-when-locked=true hotkey-overlay-title=null { spawn-sh "hoopoo-toggle-touchpad off"; }
+
+    // Media Control
+    XF86AudioPlay  allow-when-locked=true hotkey-overlay-title="Play / Pause" { spawn-sh "hoopoo-swayosd-client --playerctl play-pause"; }
+    XF86AudioPause allow-when-locked=true hotkey-overlay-title=null { spawn-sh "hoopoo-swayosd-client --playerctl play-pause"; }
+    XF86AudioNext  allow-when-locked=true hotkey-overlay-title="Next Track" { spawn-sh "hoopoo-swayosd-client --playerctl next"; }
+    XF86AudioPrev  allow-when-locked=true hotkey-overlay-title="Previous Track" { spawn-sh "hoopoo-swayosd-client --playerctl previous"; }
+
+    Mod+XF86AudioMute allow-when-locked=true hotkey-overlay-title="Switch Audio Output" { spawn-sh "hoopoo-audio-output-switch"; }
+
+    // System keys
+    XF86PowerOff allow-when-locked=true hotkey-overlay-title="Power Menu" { spawn-sh "hoopoo-menu system"; }
+    XF86Calculator     hotkey-overlay-title="Calculator" { spawn "gnome-calculator"; }
+}

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Detect ASUS Zenbook UX5406AA series laptops on Intel Panther Lake.
+
+hoopoo-hw-match "ux5406aa" && hoopoo-hw-intel-ptl
