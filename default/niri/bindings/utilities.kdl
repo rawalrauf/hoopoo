@@ -1,0 +1,54 @@
+binds {
+    // System
+    Mod+Alt+L hotkey-overlay-title="Lock the Screen" { spawn-sh "hoopoo-system-lock"; }
+
+    // Menus
+    Mod+Space          hotkey-overlay-title="Apps Menu" { spawn-sh "hoopoo-menu apps"; }
+    Mod+Alt+Space      hotkey-overlay-title="Hoopoo Menu" { spawn-sh "hoopoo-menu"; }
+    Mod+Escape         hotkey-overlay-title="System Menu" { spawn-sh "hoopoo-menu system"; }
+    Mod+Alt+T          hotkey-overlay-title="Theme Menu" { spawn-sh "hoopoo-menu theme"; }
+    Mod+Alt+B          hotkey-overlay-title="Background / Wallpaper" { spawn-sh "hoopoo-menu background"; }
+    Mod+Alt+S          hotkey-overlay-title="Share Menu" { spawn-sh "hoopoo-menu share"; }
+    Mod+Alt+Period     hotkey-overlay-title="Toggle Menu" { spawn-sh "hoopoo-menu toggle"; }
+
+    // Captures
+    Print              hotkey-overlay-title="Screenshot (Select Region)" { spawn-sh "hoopoo-capture-screenshot"; }
+    Ctrl+Print         hotkey-overlay-title="Screenshot (Full Screen)" { spawn-sh "hoopoo-capture-screenshot fullscreen"; }
+    Alt+Print          hotkey-overlay-title="Screenshot Menu" { spawn-sh "hoopoo-menu screenshot"; }
+    Mod+Print          hotkey-overlay-title="Screen Recording" { spawn-sh "hoopoo-capture-screenrecording"; }
+    Mod+Alt+Print      hotkey-overlay-title="Screen Recording Menu" { spawn-sh "hoopoo-menu screenrecord"; }
+    Mod+Ctrl+Print     hotkey-overlay-title="Extract Text (OCR)" { spawn-sh "hoopoo-capture-text-extraction"; }
+    Mod+Shift+Print    hotkey-overlay-title="Color Picker" { spawn-sh "hoopoo-capture-color"; }
+
+    // Tools
+    Mod+K              hotkey-overlay-title="Keybindings" { spawn-sh "hoopoo-menu-keybindings"; }
+    Mod+Alt+K          hotkey-overlay-title="Tmux Keybindings" { spawn-sh "hoopoo-menu-tmux-keybindings"; }
+    Mod+Alt+E          hotkey-overlay-title="Emoji Picker" { spawn-sh "hoopoo-launch-walker -m symbols"; }
+    Mod+Alt+C          allow-when-locked=true hotkey-overlay-title="Clipboard History" { spawn-sh "hoopoo-launch-walker -m clipboard"; }
+
+    // Reminders
+    Mod+Alt+R          hotkey-overlay-title="Set Reminder" { spawn-sh "hoopoo-menu reminder-set"; }
+    Mod+Alt+Shift+R    hotkey-overlay-title="Show Reminders" { spawn-sh "hoopoo-reminder show"; }
+    Mod+Alt+Ctrl+R     hotkey-overlay-title="Clear Reminders" { spawn-sh "hoopoo-reminder clear"; }
+
+    // Notifications
+    Mod+Alt+N          hotkey-overlay-title="Toggle Notification Silencing" { spawn-sh "hoopoo-toggle-notification-silencing"; }
+    Mod+Alt+Shift+N    hotkey-overlay-title="Dismiss Last Notification" { spawn-sh "makoctl dismiss"; }
+    Mod+Alt+Ctrl+N     hotkey-overlay-title="Dismiss All Notifications" { spawn-sh "makoctl dismiss --all"; }
+    Mod+Alt+Comma      hotkey-overlay-title="Invoke Last Notification" { spawn-sh "makoctl invoke"; }
+    Mod+Alt+Shift+Comma hotkey-overlay-title="Restore Last Notification" { spawn-sh "makoctl restore"; }
+
+    // Toggles
+    Mod+Backspace          hotkey-overlay-title="Toggle Window Transparency" { spawn-sh "hoopoo-niri-window-transparency-toggle"; }
+    Mod+Alt+Backspace      hotkey-overlay-title="Toggle Window Gaps" { spawn-sh "hoopoo-niri-window-gaps-toggle"; }
+    Mod+Alt+Delete         hotkey-overlay-title="Toggle Laptop Display" { spawn-sh "hoopoo-niri-monitor-internal toggle"; }
+    Mod+Alt+Shift+Delete   hotkey-overlay-title="Toggle Laptop Display Mirror" { spawn-sh "hoopoo-niri-monitor-internal-mirror toggle"; }
+    Mod+Alt+W              hotkey-overlay-title="Toggle Top Bar (Waybar)" { spawn-sh "hoopoo-toggle-waybar"; }
+    Mod+Alt+Shift+W        hotkey-overlay-title="Toggle Top Bar Transparency (Waybar)" { spawn-sh "hoopoo-toggle-waybar-transparency"; }
+    Mod+Alt+I              hotkey-overlay-title="Toggle Idle Lock" { spawn-sh "hoopoo-toggle-idle"; }
+    Mod+Alt+Escape         allow-inhibiting=false hotkey-overlay-title="Toggle Keyboard Shortcuts Inhibitor" { toggle-keyboard-shortcuts-inhibit; }
+
+    // Voxtype dictation (only active if voxtype is installed)
+    Mod+Alt+X          hotkey-overlay-title="Toggle Dictation" { spawn-sh "hoopoo-cmd-present voxtype && voxtype record toggle || notify-send -u low 'Dictation not installed' 'Install via Menu → Install → AI → Dictation'"; }
+    F9                 hotkey-overlay-title="Push to Talk (Dictation)" { spawn-sh "hoopoo-cmd-present voxtype && voxtype record start || notify-send -u low 'Dictation not installed' 'Install via Menu → Install → AI → Dictation'"; }
+}

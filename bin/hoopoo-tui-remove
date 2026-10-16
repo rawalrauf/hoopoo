@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# hoopoo:summary=Remove selected TUI desktop shortcuts
+
+set -e
+
+DESKTOP_DIR="$HOME/.local/share/applications"
+ICON_DIR="$HOME/.local/share/icons/hicolor/512x512@2/apps"
+
+if (($# == 0)); then
+  declare -A NAME_TO_ID
+  while IFS= read -r -d '' file; do
+    grep -qE '^Exec=.*(hoopoo-launch-tui|hoopoo-launch-or-focus-tui)' "$file" || continue
+    id=$(basename "${file%.desktop}")
+    name=$(grep "^Name=" "$file" | cut -d= -f2- | head -1)
+    [[ -z $name ]] && name="$id"
+    NAME_TO_ID["$name"]="$id"
+    TUI_NAMES+=("$name")
+  done < <(find "$DESKTOP_DIR" -maxdepth 1 -name 'org.hoopoo.*.desktop' -print0)
+
+  (( ${#TUI_NAMES[@]} )) || { echo "No TUIs to remove."; exit 1; }
+
+  IFS=$'\n' SORTED=($(sort <<<"${TUI_NAMES[*]}")); unset IFS
+  mapfile -t SELECTED < <(gum choose --no-limit --header "Select TUI to remove..." --selected-prefix="✗ " "${SORTED[@]}")
+
+  APP_IDS=()
+  for name in "${SELECTED[@]}"; do
+    [[ -n ${NAME_TO_ID[$name]} ]] && APP_IDS+=("${NAME_TO_ID[$name]}")
+  done
+else
+  APP_IDS=("$@")
+fi
+
+(( ${#APP_IDS[@]} )) || exit 0
+
+for ID in "${APP_IDS[@]}"; do
+  DESKTOP_FILE="$DESKTOP_DIR/$ID.desktop"
+  NAME=$(grep "^Name=" "$DESKTOP_FILE" 2>/dev/null | cut -d= -f2- | head -1)
+  ICON_REF=$(grep "^Icon=" "$DESKTOP_FILE" 2>/dev/null | cut -d= -f2-)
+
+  rm -f "$DESKTOP_FILE"
+
+  if [[ -n $ICON_REF ]]; then
+    [[ $ICON_REF == /* ]] && ICON_FILE="$ICON_REF" || ICON_FILE="$ICON_DIR/${ICON_REF}.png"
+    REMAINING=$(grep -rl "^Icon=$ICON_REF" "$DESKTOP_DIR" 2>/dev/null | wc -l)
+    (( REMAINING == 0 )) && rm -f "$ICON_FILE"
+  fi
+
+  echo "Removed ${NAME:-$ID}"
+done
+
+update-desktop-database "$DESKTOP_DIR" &>/dev/null
+gtk-update-icon-cache -q -f "$HOME/.local/share/icons/hicolor" &>/dev/null

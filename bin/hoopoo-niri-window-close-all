@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# hoopoo:summary=Close all open windows
+
+niri msg -j windows | jq -r '.[].id' | while read -r id; do
+  niri msg action close-window --id "$id"
+done
+
+# Switch to first workspace
+niri msg action focus-workspace 1

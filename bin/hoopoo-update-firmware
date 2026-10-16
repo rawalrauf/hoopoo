@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# hoopoo:summary=Update system firmware using fwupd. Ensures the fwupd EFI binary is installed
+# hoopoo:requires-sudo=true
+
+set -e
+echo -e "\e[32mUpdate Firmware\e[0m"
+
+if hoopoo-cmd-missing fwupdmgr; then
+  hoopoo-pkg-add fwupd
+fi
+
+if [[ -d /sys/firmware/efi ]] && [[ -f /usr/lib/fwupd/efi/fwupdx64.efi ]]; then
+  sudo install -D /usr/lib/fwupd/efi/fwupdx64.efi /boot/EFI/arch/fwupdx64.efi
+fi
+
+fwupdmgr refresh --force
+sudo fwupdmgr update

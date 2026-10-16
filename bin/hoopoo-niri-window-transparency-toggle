@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# hoopoo:summary=Toggle window transparency on/off in niri
+
+hoopoo-niri-toggle \
+  --invert \
+  --enabled-notification "  Window transparency enabled" \
+  --disabled-notification "  Window transparency disabled" \
+  transparency-disabled

@@ -1,0 +1,6 @@
+// User autostart overrides — loaded before the default autostart.
+// The default autostart is in ~/.local/share/hoopoo/default/niri/autostart.kdl
+// Uncomment lines below to add your own startup commands.
+
+// spawn-at-startup "your-app"
+// spawn-sh-at-startup "your-shell-command"

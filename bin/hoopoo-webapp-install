@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# hoopoo:summary=Create a desktop launcher for a web app
+# hoopoo:args=[name url icon [custom-exec] [mime-types]]
+
+set -e
+
+ICON_DIR="$HOME/.local/share/icons/hicolor/512x512@2/apps"
+APPS_DIR="$HOME/.local/share/applications"
+
+validate_url() {
+  [[ "$1" =~ ^(https?://)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/.*)?$ ]]
+}
+
+ensure_https() {
+  [[ "$1" =~ ^[a-zA-Z][a-zA-Z0-9+.-]*: ]] && echo "$1" || echo "https://$1"
+}
+
+slugify() {
+  echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/-$//'
+}
+
+url_to_app_id_base() {
+  local stripped
+  stripped=$(echo "$1" | sed -E 's|^[a-zA-Z0-9+.-]+://||')
+  stripped="${stripped%/}"
+  if [[ $stripped == */* ]]; then
+    local domain="${stripped%%/*}" path="${stripped#*/}"
+    path="${path%/}"; path="${path//\//_}"
+    echo "${domain}__${path}"
+  else
+    echo "${stripped}__"
+  fi
+}
+
+if (($# < 3)); then
+  for candidate in google-chrome chromium chromium-bin brave-browser microsoft-edge vivaldi opera thorium-browser ungoogled-chromium helium; do
+    command -v "$candidate" &>/dev/null && { HAS_CHROMIUM=true; break; }
+  done
+  [[ ${HAS_CHROMIUM:-false} == false ]] && { echo "Error: No Chromium-based browser found."; exit 1; }
+
+  echo -e "\e[32mLet's create a new web app you can start with the app launcher.\n\e[0m"
+  APP_NAME=$(gum input --prompt "Name> " --placeholder "My favorite web app")
+  while true; do
+    APP_URL=$(gum input --prompt "URL> " --placeholder "https://example.com")
+    validate_url "$APP_URL" && break
+    echo -e "\e[31mInvalid URL format.\e[0m\n"
+  done
+  APP_URL=$(ensure_https "$APP_URL")
+  ICON_SLUG=$(slugify "$APP_NAME")
+  mkdir -p "$ICON_DIR"
+  if curl -fsSL --connect-timeout 8 -o "$ICON_DIR/${ICON_SLUG}.png" "https://www.google.com/s2/favicons?domain=${APP_URL}&sz=128" 2>/dev/null && [[ -s "$ICON_DIR/${ICON_SLUG}.png" ]]; then
+    ICON_REF="${ICON_SLUG}.png"
+  else
+    ICON_REF=$(gum input --prompt "Icon URL> " --placeholder "Enter PNG icon URL manually")
+  fi
+  CUSTOM_EXEC=""; MIME_TYPES=""; INTERACTIVE=true
+else
+  APP_NAME="$1"; APP_URL="$2"; ICON_REF="$3"; CUSTOM_EXEC="${4:-}"; MIME_TYPES="${5:-}"; INTERACTIVE=false
+  validate_url "$APP_URL" || { echo "Error: Invalid URL '$APP_URL'"; exit 1; }
+  APP_URL=$(ensure_https "$APP_URL")
+fi
+
+[[ -z $APP_NAME || -z $APP_URL ]] && { echo "You must set app name and app URL!"; exit 1; }
+
+ICON_SLUG=$(slugify "$APP_NAME")
+mkdir -p "$ICON_DIR" "$APPS_DIR"
+
+if [[ $ICON_REF =~ ^https?:// ]]; then
+  ICON_PATH="$ICON_DIR/${ICON_SLUG}.png"
+  curl -fsSL --connect-timeout 8 -o "$ICON_PATH" "$ICON_REF" 2>/dev/null && [[ -s $ICON_PATH ]] || { echo "Error: Failed to download icon."; exit 1; }
+else
+  ICON_PATH="$ICON_DIR/$ICON_REF"
+  ICON_SLUG="${ICON_REF%.png}"
+fi
+
+DESKTOP_FILE="$APPS_DIR/$APP_NAME.desktop"
+cat >"$DESKTOP_FILE" <<EOF
+[Desktop Entry]
+Version=1.0
+Name=$APP_NAME
+Comment=$APP_NAME
+Exec=${CUSTOM_EXEC:-hoopoo-launch-webapp $APP_URL}
+Terminal=false
+Type=Application
+Icon=$ICON_PATH
+StartupNotify=true
+EOF
+[[ -n $MIME_TYPES ]] && echo "MimeType=$MIME_TYPES" >>"$DESKTOP_FILE"
+chmod +x "$DESKTOP_FILE"
+
+APP_ID_BASE=$(url_to_app_id_base "$APP_URL")
+for prefix in chrome brave msedge opera vivaldi helium thorium; do
+  cat >"$APPS_DIR/${prefix}-${APP_ID_BASE}-Default.desktop" <<EOF
+[Desktop Entry]
+Version=1.0
+Name=$APP_NAME
+Type=Application
+Icon=$ICON_SLUG
+NoDisplay=true
+EOF
+done
+
+update-desktop-database "$APPS_DIR" &>/dev/null
+gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" &>/dev/null
+
+if [[ $INTERACTIVE == true ]]; then echo -e "You can now find $APP_NAME using the app launcher (SUPER + SPACE)\n"; fi

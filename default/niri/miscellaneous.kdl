@@ -1,0 +1,18 @@
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+xwayland-satellite {
+    off
+}
+
+clipboard {
+    disable-primary false
+}
+
+hotkey-overlay {
+    skip-at-startup
+    hide-not-bound
+}
+
+config-notification {
+    disable-failed false
+}

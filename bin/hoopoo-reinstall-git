@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# hoopoo:summary=Reinstall the Hoopoo source directory from git
+
+set -e
+
+# Reinstall the Hoopoo configuration directory from the git source.
+
+git clone --depth=1 --branch master "https://github.com/basecamp/hoopoo.git" ~/.local/share/hoopoo-new >/dev/null
+mv $HOOPOO_PATH ~/.local/share/hoopoo-old
+mv ~/.local/share/hoopoo-new $HOOPOO_PATH

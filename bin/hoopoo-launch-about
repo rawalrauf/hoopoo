@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Launch the fastfetch TUI that gives information about the current system.
+
+exec hoopoo-launch-tui --app-id=org.hoopoo.about --title=Hoopoo bash -c 'tput civis; fastfetch; read -n 1 -s; tput cnorm'

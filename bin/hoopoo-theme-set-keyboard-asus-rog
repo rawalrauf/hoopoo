@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# hoopoo:summary=Apply the current theme keyboard color to ASUS ROG keyboards
+# hoopoo:hidden=true
+
+ASUSCTL_THEME=~/.config/hoopoo/current/theme/keyboard.rgb
+
+if hoopoo-cmd-present asusctl; then
+  asusctl aura effect static -c $(sed 's/^#//' $ASUSCTL_THEME)
+fi

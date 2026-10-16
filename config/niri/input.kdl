@@ -1,0 +1,112 @@
+// Input device configuration.
+// Find the full list of options on the wiki:
+// https://yalter.github.io/niri/Configuration:-Input
+
+input {
+    // mod-key "Super"
+    // mod-key-nested "Alt"
+
+    keyboard {
+        xkb {
+            // layout and variant are intentionally left empty — niri auto-fetches
+            // them from org.freedesktop.locale1 (localectl), so the keyboard layout
+            // set during Arch install works automatically without manual config.
+
+            // compose:ralt sets Right Alt as the compose key, enabling XCompose
+            // sequences from ~/.XCompose (special characters, emoji shortcuts etc.)
+            options "compose:ralt"
+        }
+
+        // Enable numlock on startup
+        numlock
+    }
+
+    touchpad {
+        // off
+        tap
+        // dwt
+        // dwtp
+        // drag false
+        // drag-lock
+        natural-scroll
+        // accel-speed 0.2
+        // accel-profile "flat"
+        // scroll-factor 1.0
+        // scroll-factor vertical=1.0 horizontal=-2.0
+        // scroll-method "two-finger"
+        // scroll-button 273
+        // scroll-button-lock
+        // tap-button-map "left-middle-right"
+        // click-method "clickfinger"
+        // left-handed
+        // disabled-on-external-mouse
+        // middle-emulation
+    }
+
+    mouse {
+        // off
+        // natural-scroll
+        // accel-speed 0.2
+        // accel-profile "flat"
+        // scroll-factor 1.0
+        // scroll-factor vertical=1.0 horizontal=-2.0
+        // scroll-method "no-scroll"
+        // scroll-button 273
+        // scroll-button-lock
+        // left-handed
+        // middle-emulation
+    }
+
+    trackpoint {
+        // off
+        // natural-scroll
+        // accel-speed 0.2
+        // accel-profile "flat"
+        // scroll-method "on-button-down"
+        // scroll-button 273
+        // scroll-button-lock
+        // left-handed
+        // middle-emulation
+    }
+
+    trackball {
+        // off
+        // natural-scroll
+        // accel-speed 0.2
+        // accel-profile "flat"
+        // scroll-method "on-button-down"
+        // scroll-button 273
+        // scroll-button-lock
+        // left-handed
+        // middle-emulation
+    }
+
+    tablet {
+        // off
+        map-to-output "eDP-1"
+        // left-handed
+        // calibration-matrix 1.0 0.0 0.0 0.0 1.0 0.0
+    }
+
+    touch {
+        // off
+        map-to-output "eDP-1"
+        // calibration-matrix 1.0 0.0 0.0 0.0 1.0 0.0
+    }
+
+    focus-follows-mouse max-scroll-amount="0%"
+    // warp-mouse-to-focus
+    // disable-power-key-handling
+    // workspace-auto-back-and-forth
+}
+
+// Per-app scroll speed overrides
+window-rule {
+    match app-id="com.mitchellh.ghostty"
+    scroll-factor 0.2
+}
+
+window-rule {
+    match app-id="Alacritty"
+    scroll-factor 0.4
+}

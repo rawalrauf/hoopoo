@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# hoopoo:summary=Reset Waybar config to Hoopoo defaults
+# hoopoo:examples=hoopoo refresh waybar
+
+hoopoo-refresh-config waybar/config.jsonc
+hoopoo-refresh-config waybar/style.css
+hoopoo-restart-waybar

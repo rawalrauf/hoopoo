@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Overwrite the user config for hyprlock with the Hoopoo default.
+
+hoopoo-refresh-config hypr/hyprlock.conf

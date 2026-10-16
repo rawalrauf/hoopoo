@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Launch the Hoopoo audio controls TUI (provided by wiremix).
+
+hoopoo-launch-or-focus-tui --title="Volume Control" wiremix

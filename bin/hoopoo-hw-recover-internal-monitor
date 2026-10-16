@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# hoopoo:summary=Clear the internal-monitor-disable toggle if no external display is connected.
+
+TOGGLE="$HOME/.local/state/hoopoo/toggles/niri/internal-monitor-off"
+
+if hoopoo-niri-toggle-enabled internal-monitor-off && ! hoopoo-hw-external-monitors; then
+  rm -f "$TOGGLE"
+fi

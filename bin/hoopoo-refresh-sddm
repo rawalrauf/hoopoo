@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# hoopoo:summary=Refresh the SDDM theme from default
+# hoopoo:requires-sudo=true
+
+sudo rm -rf /usr/share/sddm/themes/hoopoo
+sudo cp -r $HOOPOO_PATH/default/sddm/hoopoo /usr/share/sddm/themes/hoopoo

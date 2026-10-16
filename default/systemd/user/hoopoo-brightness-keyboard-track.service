@@ -1,0 +1,12 @@
+[Unit]
+Description=Track keyboard backlight brightness changes
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/share/hoopoo/bin/hoopoo-brightness-keyboard-track
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

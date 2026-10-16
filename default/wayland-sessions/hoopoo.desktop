@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Hoopoo
+Comment=Hoopoo niri session managed by uwsm
+Exec=uwsm start -g -1 -e -D niri niri.desktop
+DesktopNames=niri
+TryExec=uwsm
+Type=Application

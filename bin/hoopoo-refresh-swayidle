@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# hoopoo:summary=Overwrite the user config for swayidle with the Hoopoo default and restart the service.
+
+hoopoo-refresh-config swayidle/swayidle.conf
+hoopoo-restart-swayidle

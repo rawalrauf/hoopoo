@@ -1,0 +1,4 @@
+window-rule {
+    match app-id=r#"(qemu|virt-viewer)"#
+    opacity 1.0
+}

@@ -1,0 +1,9 @@
+window-rule {
+    match app-id="ffplay" title="WebcamOverlay"
+    open-floating true
+    opacity 1.0
+    default-floating-position x=40 y=40 relative-to="bottom-right"
+    border {
+        off
+    }
+}

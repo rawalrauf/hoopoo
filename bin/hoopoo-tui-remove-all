@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# hoopoo:summary=Remove all installed TUI shortcuts
+
+set -e
+
+DESKTOP_DIR="$HOME/.local/share/applications"
+ICON_DIR="$HOME/.local/share/icons/hicolor/512x512@2/apps"
+
+mapfile -d '' files < <(find "$DESKTOP_DIR" -maxdepth 1 -name "org.hoopoo.*.desktop" -print0 2>/dev/null)
+
+tui_files=()
+for file in "${files[@]}"; do
+  grep -qE '^Exec=.*(hoopoo-launch-tui|hoopoo-launch-or-focus-tui)' "$file" 2>/dev/null && tui_files+=("$file")
+done
+
+(( ${#tui_files[@]} )) || { echo "No TUIs found."; exit 0; }
+
+for file in "${tui_files[@]}"; do
+  name=$(grep "^Name=" "$file" 2>/dev/null | cut -d= -f2- | head -1)
+  icon_ref=$(grep "^Icon=" "$file" 2>/dev/null | cut -d= -f2-)
+
+  rm -f "$file"
+
+  if [[ -n $icon_ref ]]; then
+    [[ $icon_ref == /* ]] && icon_file="$icon_ref" || icon_file="$ICON_DIR/${icon_ref}.png"
+    remaining=$(grep -rl "^Icon=$icon_ref" "$DESKTOP_DIR" 2>/dev/null | wc -l)
+    (( remaining == 0 )) && rm -f "$icon_file"
+  fi
+
+  echo "Removed ${name:-$(basename "$file" .desktop)}"
+done
+
+update-desktop-database "$DESKTOP_DIR" &>/dev/null
+gtk-update-icon-cache -q -f "$HOME/.local/share/icons/hicolor" &>/dev/null
+echo "All TUIs removed."

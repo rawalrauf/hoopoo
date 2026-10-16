@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# hoopoo:summary=Prompt for text input with Walker
+# hoopoo:group=menu
+# hoopoo:name=input
+# hoopoo:args=prompt [walker args...]
+# hoopoo:examples=hoopoo menu input Reminder|hoopoo-menu-input "Reminder in minutes" --width 400
+
+set -euo pipefail
+
+prompt="${1:-Input}"
+if (( $# > 0 )); then
+  shift
+fi
+
+hoopoo-launch-walker --dmenu --inputonly --width 295 --minheight 1 --maxheight 1 -p "$prompt…" "$@" 2>/dev/null

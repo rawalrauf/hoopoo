@@ -1,0 +1,145 @@
+#!/bin/bash
+
+# hoopoo:summary=Native messaging host: download the URL sent by the yt-dlp Chromium extension
+# hoopoo:hidden=true
+
+set -euo pipefail
+
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+export HOOPOO_PATH="${HOOPOO_PATH:-$(cd -- "$(dirname -- "$SCRIPT_PATH")/.." && pwd)}"
+export PATH="$HOOPOO_PATH/bin:/usr/local/bin:/usr/bin:$PATH"
+
+DOWNLOAD_DIR="${HOOPOO_YTDLP_DIR:-$HOME/Videos}"
+
+parse_url() {
+  jq -r '.url // empty' 2>/dev/null <<<"$1" || true
+}
+
+valid_url() {
+  [[ $1 =~ ^https?:// ]]
+}
+
+resolve_download_file() {
+  local candidate=$1 file_real dir_real
+
+  [[ -n $candidate ]] || return 1
+  [[ $candidate != *$'\n'* && $candidate != *$'\r'* && $candidate != *$'\t'* ]] || return 1
+  [[ -f $candidate ]] || return 1
+
+  IFS= read -r -d '' file_real < <(realpath -ze -- "$candidate") || return 1
+  IFS= read -r -d '' dir_real < <(realpath -ze -- "$DOWNLOAD_DIR") || return 1
+
+  [[ $file_real != *$'\n'* && $file_real != *$'\r'* && $file_real != *$'\t'* ]] || return 1
+  [[ $file_real == "${dir_real%/}"/* ]] || return 1
+
+  printf '%s' "$file_real"
+}
+
+decode_title() {
+  local decoded
+
+  decoded=$(jq -r 'if type == "string" then . else empty end' <<<"$1" 2>/dev/null) || return 1
+  decoded=${decoded%%[[:cntrl:]]*}
+  [[ -n $decoded && $decoded != -* ]] || return 1
+
+  printf '%s' "$decoded"
+}
+
+title_from_file() {
+  local name=${1##*/}
+  name=${name%.*}
+  name=${name//[$'\n\r\t']/}
+  if [[ -z $name || $name == -* ]]; then
+    printf '%s' "Video"
+  else
+    printf '%s' "$name"
+  fi
+}
+
+download_url() {
+  local url="$1"
+
+  mkdir -p "$DOWNLOAD_DIR"
+
+  local video_title=""
+  video_title=$(yt-dlp --no-playlist --simulate --quiet --no-warnings --print "%(title)s" -- "$url" 2>/dev/null || true)
+
+  if [[ -z $video_title ]]; then
+    notify-send -u critical "No video found for download" "$url"; (sleep 5 && makoctl dismiss) &
+    exit 0
+  fi
+
+  ((${#video_title} > 50)) && video_title="${video_title:0:50}…"
+
+  local notif_id
+  notif_id=$(notify-send --print-id -i "$HOOPOO_PATH/default/chromium/extensions/yt-dlp/icon.png" "Downloading" "$video_title" 2>/dev/null || true)
+
+  local line filepath="" title="" resolved
+  while IFS= read -r line; do
+    case $line in
+    HOOPOO_FILE*)
+      resolved=$(resolve_download_file "${line#HOOPOO_FILE$'\t'}") || continue
+      filepath=$resolved
+      ;;
+    HOOPOO_TITLE*)
+      title=$(decode_title "${line#HOOPOO_TITLE$'\t'}") || title=""
+      ;;
+    esac
+  done < <(PYTHONUNBUFFERED=1 yt-dlp --no-playlist --no-simulate \
+    --quiet --no-warnings --no-exec --no-exec-before-download --progress --newline \
+    --paths "$DOWNLOAD_DIR" -o '%(title)s.%(ext)s' \
+    --print $'after_move:HOOPOO_FILE\t%(filepath)s' \
+    --print $'after_move:HOOPOO_TITLE\t%(title)j' \
+    -- "$url" 2>&1)
+
+  [[ -n $notif_id ]] && notify-send --replace-id "$notif_id" -t 1 "Downloading" "$video_title" 2>/dev/null || true
+
+  if [[ -n $filepath ]]; then
+    [[ -n $title ]] || title=$(title_from_file "$filepath")
+    ((${#title} > 50)) && title="${title:0:50}…"
+
+    local preview
+    preview="$(mktemp --suffix=.jpg)"
+    ffmpeg -y -i "$filepath" -ss 00:00:00.1 -vframes 1 \
+      -vf "crop='min(iw,ih)':'min(iw,ih)',scale=256:256" -q:v 2 \
+      "$preview" -loglevel quiet 2>/dev/null || true
+
+    if [[ -f $preview ]]; then
+      ACTION=$(notify-send "Download complete" "$title" -i "$preview" -A "default=open") || true
+      [[ $ACTION == "default" ]] && mpv "$filepath" >/dev/null 2>&1 &
+      (sleep 12; rm -f "$preview") &
+    else
+      ACTION=$(notify-send "Download complete" "$title" -A "default=open") || true
+      [[ $ACTION == "default" ]] && mpv "$filepath" >/dev/null 2>&1 &
+    fi
+  else
+    notify-send -u critical "Download failed" "$url"; (sleep 5 && makoctl dismiss) &
+  fi
+
+  exit 0
+}
+
+main() {
+  local length payload url
+
+  if [[ ${1:-} == "--download" ]]; then
+    download_url "$2"
+  fi
+
+  length=$(head -c4 | od -An -v -tu4 --endian=little | tr -d ' ')
+  [[ -n ${length:-} ]] && ((length > 0)) || exit 0
+
+  payload=$(head -c "$length")
+
+  printf '\x02\x00\x00\x00{}'
+
+  url=$(parse_url "$payload")
+  [[ -n $url ]] || exit 0
+  valid_url "$url" || exit 0
+
+  setsid -f "$SCRIPT_PATH" --download "$url" </dev/null >/dev/null 2>&1
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi

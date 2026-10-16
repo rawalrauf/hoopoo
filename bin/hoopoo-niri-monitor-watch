@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# hoopoo:summary=Watch niri output events and recover monitor state when a monitor is removed
+
+LAST_TRIGGER_FILE="/tmp/hoopoo-monitor-watch-trigger"
+
+niri msg --json event-stream 2>/dev/null | while read -r event; do
+  if echo "$event" | grep -q '"WorkspacesChanged"'; then
+    NOW=$(date +%s)
+    LAST=$(cat "$LAST_TRIGGER_FILE" 2>/dev/null || echo 0)
+    if (( NOW - LAST >= 3 )); then
+      echo "$NOW" > "$LAST_TRIGGER_FILE"
+      hoopoo-niri-monitor-internal recover
+      hoopoo-niri-monitor-internal-mirror recover
+    fi
+  fi
+done

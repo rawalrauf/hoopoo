@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# hoopoo:summary=Apply the current theme keyboard color to supported keyboards
+# hoopoo:hidden=true
+
+hoopoo-theme-set-keyboard-asus-rog
+hoopoo-theme-set-keyboard-f16

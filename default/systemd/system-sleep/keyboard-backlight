@@ -1,0 +1,13 @@
+#!/bin/bash
+
+sleep_action=${SYSTEMD_SLEEP_ACTION:-$2}
+
+if [[ $1 == "pre" && $sleep_action == "hibernate" ]]; then
+  pkill -x hyprlock 2>/dev/null || true
+fi
+
+if [[ $1 == "post" && $sleep_action == "hibernate" ]]; then
+  uid=$(loginctl list-sessions --no-legend | awk '{print $2}' | head -1)
+  [[ -n $uid ]] && su - "$(id -un "$uid")" -c \
+    "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${uid}/bus hoopoo-restart-swayidle" >/dev/null 2>&1 || true
+fi

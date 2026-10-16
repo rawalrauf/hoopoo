@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Print the installed Hoopoo version
+
+cat $HOOPOO_PATH/version

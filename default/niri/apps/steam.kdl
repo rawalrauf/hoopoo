@@ -1,0 +1,17 @@
+window-rule {
+    match app-id=r#"steam.*"#
+    open-floating true
+    opacity 1.0
+}
+
+window-rule {
+    match app-id="steam" title="Steam"
+    default-column-width { fixed 1100; }
+    default-window-height { fixed 700; }
+}
+
+window-rule {
+    match app-id="steam" title="Friends List"
+    default-column-width { fixed 460; }
+    default-window-height { fixed 800; }
+}

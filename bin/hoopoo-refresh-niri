@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# hoopoo:summary=Reset niri user configs to Hoopoo defaults
+
+hoopoo-refresh-config niri/config.kdl
+hoopoo-refresh-config niri/autostart.kdl
+hoopoo-refresh-config niri/bindings.kdl
+hoopoo-refresh-config niri/looknfeel.kdl
+hoopoo-refresh-config niri/monitors.kdl
+hoopoo-refresh-config niri/input.kdl
+hoopoo-refresh-config niri/flags.kdl
+hoopoo-refresh-config niri/window-rules.kdl
+
+hoopoo-restart-niri 2>/dev/null || true

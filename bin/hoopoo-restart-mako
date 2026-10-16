@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Reload mako configuration (used by the Hoopoo theme switching).
+
+makoctl reload

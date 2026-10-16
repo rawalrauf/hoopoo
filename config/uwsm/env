@@ -1,0 +1,11 @@
+# Changes require a restart to take effect.
+
+# Ensure Hoopoo bins are in the path
+export HOOPOO_PATH=$HOME/.local/share/hoopoo
+export PATH=$HOOPOO_PATH/bin:$PATH:$HOME/.local/bin
+
+# Set default terminal and editor
+source ~/.config/uwsm/default
+
+# Activate mise if present on the system
+hoopoo-cmd-present mise && eval "$(mise activate bash --shims)"

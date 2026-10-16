@@ -1,0 +1,10 @@
+// User window rules
+// Add your custom window rules here.
+// See: https://github.com/YaLTeR/niri/wiki/Configuration:-Window-Rules
+//
+// Example:
+// window-rule {
+//   match app-id="org.gnome.Calculator"
+//   open-floating true
+//   default-floating-size { width 400; height 500; }
+// }

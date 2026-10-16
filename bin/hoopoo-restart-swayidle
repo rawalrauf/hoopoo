@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Restart the swayidle service (used for idle detection and auto-lock).
+
+hoopoo-restart-app swayidle -w -C ~/.config/swayidle/swayidle.conf

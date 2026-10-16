@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# hoopoo:summary=Log out of the current session
+# hoopoo:examples=hoopoo logout | hoopoo system logout
+# hoopoo:aliases=hoopoo logout
+
+hoopoo-niri-window-close-all
+sleep 1
+uwsm stop

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# hoopoo:summary=No-op now that hoopoo-update-perform is responsible for idle management.
+# hoopoo:hidden=true

@@ -1,0 +1,25 @@
+binds {
+    Mod+Return        hotkey-overlay-title="Open a Terminal (Current Directory)" { spawn-sh "xdg-terminal-exec --dir=\"$(hoopoo-cmd-terminal-cwd)\""; }
+
+    // Standard apps — Mod+Shift
+    Mod+Shift+Return  hotkey-overlay-title="Open Tmux (Current Directory)" { spawn-sh "xdg-terminal-exec --dir=\"$(hoopoo-cmd-terminal-cwd)\" bash -c 'tmux attach || tmux new -s Work'"; }
+    Mod+Shift+F hotkey-overlay-title="Open File Manager (Current Directory)" { spawn-sh "nautilus --new-window \"$(hoopoo-cmd-terminal-cwd)\""; }
+    Mod+Shift+B hotkey-overlay-title="Open Browser" { spawn-sh "hoopoo-launch-browser"; }
+    Mod+Shift+P hotkey-overlay-title="Open Browser (Private)" { spawn-sh "hoopoo-launch-browser --private"; }
+    Mod+Shift+N hotkey-overlay-title="Open Editor" { spawn-sh "hoopoo-launch-editor"; }
+    Mod+Shift+Slash hotkey-overlay-title="Open Passwords" { spawn-sh "hoopoo-launch-or-focus keepassxc 'uwsm-app -- keepassxc'"; }
+    Mod+Shift+M hotkey-overlay-title="Open Music" { spawn-sh "hoopoo-launch-or-focus spotify 'uwsm-app -- spotify'"; }
+    Mod+Shift+Z hotkey-overlay-title="Open Writing App" { spawn-sh "uwsm-app -- typora --enable-wayland-ime"; }
+
+    // Web apps — Mod+Shift
+    Mod+Shift+W hotkey-overlay-title="Open WhatsApp" { spawn-sh "hoopoo-launch-or-focus-webapp 'https://web.whatsapp.com'"; }
+    Mod+Shift+Y hotkey-overlay-title="Open YouTube" { spawn-sh "hoopoo-launch-webapp 'https://youtube.com'"; }
+    Mod+Shift+G hotkey-overlay-title="Open GitHub" { spawn-sh "hoopoo-launch-or-focus-webapp 'https://github.com'"; }
+    Mod+Shift+E hotkey-overlay-title="Open Email (Gmail)" { spawn-sh "hoopoo-launch-or-focus-webapp 'https://mail.google.com'"; }
+
+    // TUI / system controls — Mod+Shift+Ctrl
+    Mod+Shift+Ctrl+A hotkey-overlay-title="Audio Controls" { spawn-sh "hoopoo-launch-audio"; }
+    Mod+Shift+Ctrl+B hotkey-overlay-title="Bluetooth Controls" { spawn-sh "hoopoo-launch-bluetooth"; }
+    Mod+Shift+Ctrl+W hotkey-overlay-title="Wifi Controls" { spawn-sh "hoopoo-launch-wifi"; }
+    Mod+Shift+Ctrl+T hotkey-overlay-title="System Monitor" { spawn-sh "hoopoo-launch-system-monitor"; }
+}

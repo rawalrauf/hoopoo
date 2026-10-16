@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# hoopoo:summary=Pick one option with Walker, optionally marking the current selection
+# hoopoo:group=menu
+# hoopoo:name=select
+# hoopoo:args=<prompt> [--current <value>] <option>... [-- walker args...]
+# hoopoo:examples=hoopoo menu select "Power Profile" --current balanced performance balanced power-saver | hoopoo menu select Format jpg png
+
+set -euo pipefail
+
+if (( $# < 2 )); then
+  echo "Usage: hoopoo-menu-select <prompt> [--current <value>] <option>... [-- walker args...]" >&2
+  exit 1
+fi
+
+prompt="$1"
+shift
+
+current=""
+options=()
+walker_args=()
+
+while (( $# > 0 )); do
+  case "$1" in
+    --current)
+      current="$2"
+      shift 2
+      ;;
+    --)
+      shift
+      walker_args=("$@")
+      break
+      ;;
+    *)
+      options+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if (( ${#options[@]} == 0 )); then
+  echo "Usage: hoopoo-menu-select <prompt> [--current <value>] <option>..." >&2
+  exit 1
+fi
+
+marked_options=()
+preselect=""
+for opt in "${options[@]}"; do
+  if [[ -n $current && $opt == "$current" ]]; then
+    marked_options+=("$opt ✓")
+    preselect="$opt ✓"
+  else
+    marked_options+=("$opt")
+  fi
+done
+
+preselect_args=()
+if [[ -n $preselect ]]; then
+  index=$(printf '%s\n' "${marked_options[@]}" | grep -nxF "$preselect" | cut -d: -f1)
+  [[ -n $index ]] && preselect_args+=("-c" "$index")
+fi
+
+result=$(printf '%s\n' "${marked_options[@]}" | hoopoo-launch-walker --dmenu --width 295 --minheight 1 --maxheight 300 -p "$prompt…" "${preselect_args[@]}" "${walker_args[@]}" 2>/dev/null)
+
+[[ -z $result ]] && exit 1
+
+echo "${result% ✓}"

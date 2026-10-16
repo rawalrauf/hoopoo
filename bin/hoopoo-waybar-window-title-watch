@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# hoopoo:summary=Watch niri window focus events and hide the active window title in waybar when focus is lost
+# hoopoo:hidden=true
+
+trap '' RTMIN+9
+
+niri msg event-stream 2>/dev/null | while IFS= read -r line; do
+  if [[ $line == *"Window focus changed: None"* ]] && { [[ $(niri msg --json layers 2>/dev/null) == *'"namespace":"walker"'* ]] || [[ $(niri msg --json overview-state 2>/dev/null) == '{"is_open":true}' ]]; }; then
+    grep -qF '#window label { font-size: 0; }' "$HOME/.config/waybar/style.css" || \
+      printf '#window label { font-size: 0; }\n' >> "$HOME/.config/waybar/style.css"
+    while IFS= read -r inner; do
+      if [[ $inner == *"Window focus changed: Some"* || $inner == *"Window opened or changed"*"is_focused: true"* || $inner == *"Overview toggled: false"* ]]; then
+        truncate -s -$(wc -c < <(printf '#window label { font-size: 0; }\n')) "$HOME/.config/waybar/style.css"
+        break
+      fi
+    done
+  fi
+done

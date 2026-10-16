@@ -1,0 +1,35 @@
+// User look & feel overrides — loaded after the default looknfeel.
+// Add new toggleable preferences here (blur, opacity, animation slowdown, etc.)
+// Default values live in ~/.local/share/hoopoo/default/niri/looknfeel.kdl
+// Window gaps are managed by hoopoo-niri-window-gaps-toggle via flags.kdl
+
+layout {
+    // When to center focused column: "never", "always", "on-overflow"
+    center-focused-column "never"
+
+    // Widths cycled by Mod+R
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+        // fixed 1920
+    }
+
+    // Default width for new windows
+    default-column-width { proportion 0.5; }
+    // default-column-width {}
+
+    // Struts — outer gaps around the workspace
+    // struts {
+    //     left 0
+    //     right 0
+    //     top 0
+    //     bottom 0
+    // }
+}
+
+// Override animations (default has slowdown 2.0)
+// animations {
+//     off
+//     slowdown 2.0
+// }

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# hoopoo:summary=Wrapper for swayosd-client that targets the currently focused monitor.
+# hoopoo:args=<swayosd-client-args...>
+
+exec swayosd-client --monitor "$(niri msg --json focused-output | jq -r '.name')" "$@"

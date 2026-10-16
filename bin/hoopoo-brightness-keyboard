@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# hoopoo:summary=Adjust keyboard backlight brightness using available steps.
+# hoopoo:args=<up|down|cycle|off|restore>
+
+direction="${1:-up}"
+
+# Find keyboard backlight device (look for *kbd_backlight* pattern in leds class).
+device=""
+for candidate in /sys/class/leds/*kbd_backlight*; do
+  if [[ -e $candidate ]]; then
+    device="$(basename "$candidate")"
+    break
+  fi
+done
+
+if [[ -z $device ]]; then
+  echo "No keyboard backlight device found" >&2
+  exit 1
+fi
+
+state_file="$HOME/.local/state/hoopoo/kbd-brightness"
+
+if [[ $direction == "off" ]]; then
+  mkdir -p "$(dirname "$state_file")"
+  current="$(cat "/sys/class/leds/$device/brightness" 2>/dev/null)"
+  # Snapshot only non-zero values so a zero (user turned it off before, or
+  # firmware zeroed the backlight on lid close) never destroys the restore
+  # point.
+  if [[ -n $current ]] && (( current > 0 )); then
+    echo "$current" > "$state_file"
+  fi
+  brightnessctl -d "$device" set 0 >/dev/null
+  exit 0
+elif [[ $direction == "restore" ]]; then
+  if [[ -f $state_file ]]; then
+    saved="$(cat "$state_file")"
+    # A saved 0 is a deliberate restore point (user pressed down/cycle to
+    # zero); apply it so the backlight stays off after wake or login.
+    if [[ -n $saved ]]; then
+      brightnessctl -d "$device" set "$saved" >/dev/null
+    fi
+  fi
+  exit 0
+fi
+
+# Get current and max brightness to determine step size.
+max_brightness="$(brightnessctl -d "$device" max)"
+current_brightness="$(brightnessctl -d "$device" get)"
+
+# Calculate step as 10% of max brightness. Keyboards with many levels (e.g. 512)
+# need larger steps; keyboards with few levels (e.g. 3) fall back to step=1.
+step=$(( max_brightness / 10 ))
+(( step < 1 )) && step=1
+
+if [[ $direction == "cycle" ]]; then
+  new_brightness=$(( current_brightness + step ))
+  (( new_brightness > max_brightness )) && new_brightness=0
+elif [[ $direction == "up" ]]; then
+  new_brightness=$(( current_brightness + step ))
+  (( new_brightness > max_brightness )) && new_brightness=$max_brightness
+else
+  new_brightness=$(( current_brightness - step ))
+  (( new_brightness < 0 )) && new_brightness=0
+fi
+
+# Set the new brightness.
+brightnessctl -d "$device" set "$new_brightness" >/dev/null
+
+# Save to persistent state file. Reaching 0 through the compositor (down to
+# zero, or cycling around) is deliberate user intent on normal hardware, so
+# it becomes the restore point. Firmware-forced zeros never come through
+# here, and the ThinkPad poller filters them out separately.
+mkdir -p "$(dirname "$state_file")"
+echo "$new_brightness" > "$state_file"
+
+# Use SwayOSD to display the new brightness setting.
+percent=$((new_brightness * 100 / max_brightness))
+hoopoo-swayosd-kbd-brightness "$percent"

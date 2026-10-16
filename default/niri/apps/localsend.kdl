@@ -1,0 +1,7 @@
+window-rule {
+    match app-id=r#"(Share|localsend)"#
+    open-floating true
+    default-column-width { fixed 875; }
+    default-window-height { fixed 600; }
+}
+

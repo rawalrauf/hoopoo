@@ -1,0 +1,14 @@
+window-rule {
+    match app-id=r"^org\.hoopoo\.[^.]+$"
+    open-floating true
+    default-column-width { fixed 875; }
+    default-window-height { fixed 610; }
+}
+window-rule {
+    match app-id="org.hoopoo.about"
+    open-floating true
+    default-column-width { fixed 1063; }
+    default-window-height { fixed 723; }
+}
+
+

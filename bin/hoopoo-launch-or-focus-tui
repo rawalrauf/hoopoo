@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# hoopoo:summary=Launch or focus a TUI window matching base, float, or tile mode
+# hoopoo:args=[--app-id=ID] <command> [args...]
+
+if (($# == 0)); then
+  echo "Usage: hoopoo-launch-or-focus-tui [--app-id=ID] <command> [args...]"
+  exit 1
+fi
+
+EXPLICIT_ID=""
+EXPLICIT_TITLE=""
+if [[ "$1" == --app-id=* ]]; then
+  EXPLICIT_ID="${1#--app-id=}"
+  shift
+fi
+
+if [[ "$1" == --title=* ]]; then
+  EXPLICIT_TITLE="${1#--title=}"
+  shift
+fi
+
+# Extract binary name from first argument (e.g., "lazygit" from "lazygit -p ~/path")
+CMD_NAME=$(basename "$1")
+
+# Query Niri for any running window matching org.hoopoo.<CMD_NAME>, org.hoopoo.float.<CMD_NAME>, or org.hoopoo.tile.<CMD_NAME>
+RUNNING_ID=$(niri msg -j windows 2>/dev/null | jq -r --arg cmd "$CMD_NAME" '
+  .[] | select(.app_id != null) | select(.app_id | test("^org\\.hoopoo\\.(float\\.|tile\\.)?" + $cmd + "$")) | .app_id
+' | head -n 1)
+
+if [[ -n "$RUNNING_ID" && "$RUNNING_ID" != "null" ]]; then
+  TARGET_APP_ID="$RUNNING_ID"
+else
+  if [[ -n "$EXPLICIT_ID" ]]; then
+    TARGET_APP_ID="$EXPLICIT_ID"
+  else
+    TARGET_APP_ID="org.hoopoo.$CMD_NAME"
+  fi
+fi
+
+TITLE="${EXPLICIT_TITLE:-$CMD_NAME}"
+LAUNCH_COMMAND="hoopoo-launch-tui --app-id=$TARGET_APP_ID --title=\"$TITLE\" $@"
+
+exec hoopoo-launch-or-focus "$TARGET_APP_ID" "$LAUNCH_COMMAND"

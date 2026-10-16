@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# hoopoo:summary=Toggle mirroring the internal laptop display to an external monitor via wl-mirror
+# hoopoo:args=<on|off|toggle|recover>
+
+RULE_FILE="$HOME/.local/state/hoopoo/toggles/niri/wl-mirror-output.kdl"
+mkdir -p "$(dirname "$RULE_FILE")"
+
+INTERNAL=$(niri msg outputs 2>/dev/null | grep -oP '\(\K[^)]+' | grep "eDP" | head -1)
+EXTERNAL=$(niri msg outputs 2>/dev/null | grep -oP '\(\K[^)]+' | grep -v "eDP\|preferred\|current" | head -1)
+
+mirror_running() {
+  pgrep -x wl-mirror >/dev/null
+}
+
+enable() {
+  if [[ -z $EXTERNAL ]]; then
+    notify-send -u low "󰍹  No external monitor found"
+    exit 1
+  fi
+  if [[ -z $INTERNAL ]]; then
+    notify-send -u low "󰍹  No internal display found"
+    exit 1
+  fi
+  if mirror_running; then
+    return 0
+  fi
+
+  local new_rule="window-rule {
+    match app-id=\"at.yrlf.wl_mirror\"
+    open-on-output \"$EXTERNAL\"
+}"
+  local current_output
+  current_output=$(grep -oP 'open-on-output "\K[^"]+' "$RULE_FILE" 2>/dev/null)
+  if [[ "$current_output" != "$EXTERNAL" ]]; then
+    echo "$new_rule" > "$RULE_FILE"
+    hoopoo-restart-niri
+    sleep 0.3
+  fi
+
+  nohup wl-mirror --fullscreen-output "$EXTERNAL" "$INTERNAL" >/dev/null 2>&1 &
+  disown $!
+  notify-send -u low "󰍹  Mirroring enabled on $EXTERNAL"
+}
+
+disable() {
+  local FOCUSED_ID
+  FOCUSED_ID=$(niri msg --json focused-window 2>/dev/null | jq -r '.id // empty')
+
+  local mirror_id
+  mirror_id=$(niri msg --json windows 2>/dev/null | jq -r '.[] | select(.app_id == "at.yrlf.wl_mirror") | .id // empty' | head -1)
+
+  if [[ -n $mirror_id ]]; then
+    niri msg action close-window --id "$mirror_id" 2>/dev/null
+  else
+    pkill -x wl-mirror 2>/dev/null || true
+  fi
+
+  if [[ -n $FOCUSED_ID ]]; then
+    niri msg action focus-window --id "$FOCUSED_ID" 2>/dev/null
+  fi
+
+  rm -f "$RULE_FILE"
+  notify-send -u low "󰍹  Mirroring disabled"
+}
+
+recover() {
+  if ! hoopoo-hw-external-monitors && mirror_running; then
+    disable
+  fi
+}
+
+case "$1" in
+  on) enable ;;
+  off) disable ;;
+  toggle) mirror_running && disable || enable ;;
+  recover) recover ;;
+  *)
+    echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
+    exit 1
+    ;;
+esac

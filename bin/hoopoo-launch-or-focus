@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# hoopoo:summary=Launch an app or focus an existing window matching a pattern
+# hoopoo:args=<app-id> <launch-command>
+
+if (($# == 0)); then
+  echo "Usage: hoopoo-launch-or-focus [app-id] [launch-command]"
+  exit 1
+fi
+
+APP_ID="$1"
+LAUNCH_COMMAND="${2:-"uwsm-app -- $APP_ID"}"
+
+WINDOW_ID=$(niri msg -j windows | jq -r --arg id "$APP_ID" '.[] | select(.app_id == $id) | .id' | head -n1)
+
+if [[ -n "$WINDOW_ID" ]]; then
+  niri msg action focus-window --id "$WINDOW_ID"
+else
+  eval exec setsid $LAUNCH_COMMAND
+fi

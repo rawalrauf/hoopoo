@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# hoopoo:summary=Open Voxtype AI model setup
+
+set -e
+
+hoopoo-launch-floating-terminal-with-presentation "voxtype setup model"
+hoopoo-restart-waybar

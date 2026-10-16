@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# hoopoo:summary=Check if a niri toggle flag is currently enabled.
+# hoopoo:args=<flag-name>
+
+[[ -f "$HOME/.local/state/hoopoo/toggles/niri/$1.kdl" ]]

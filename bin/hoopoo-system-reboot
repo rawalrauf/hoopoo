@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# hoopoo:summary=Reboot after closing application windows
+# hoopoo:examples=hoopoo reboot | hoopoo system reboot
+# hoopoo:aliases=hoopoo reboot
+
+hoopoo-state clear re*-required
+
+nohup bash -c "sleep 2 && systemctl reboot --no-wall" >/dev/null 2>&1 &
+
+hoopoo-niri-window-close-all
+sleep 1

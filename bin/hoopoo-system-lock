@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# hoopoo:summary=Lock the computer and turn off the display
+# hoopoo:group=system
+# hoopoo:name=lock
+# hoopoo:examples=hoopoo system lock
+
+# Ensure KeePassXC is locked
+if pgrep -x "keepassxc" >/dev/null; then
+  keepassxc --lock >/dev/null 2>&1 &
+fi
+
+if ! pidof hyprlock >/dev/null; then
+  if [[ ${HOOPOO_LOCK_ONLY:-false} == "true" ]]; then
+    hyprlock --immediate-render &
+    sleep 1
+  else
+    (
+      hyprlock --immediate-render
+      hoopoo-system-wake
+    ) &
+  fi
+fi

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# hoopoo:summary=Returns the battery percentage remaining as an integer.
+
+total_now=0
+total_full=0
+for bat in /sys/class/power_supply/BAT*; do
+  energy_now=$(cat "$bat/energy_now" 2>/dev/null)
+  energy_full=$(cat "$bat/energy_full" 2>/dev/null)
+  [[ -n $energy_now ]] && (( total_now += energy_now ))
+  [[ -n $energy_full ]] && (( total_full += energy_full ))
+done
+
+if (( total_full > 0 )); then
+  awk "BEGIN { printf \"%d\", int(($total_now/$total_full)*100 + 0.5) }"
+fi

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# hoopoo:summary=Set the correct power profile on boot based on current AC/battery state.
+
+if hoopoo-battery-present && ! hoopoo-ac-present; then
+  hoopoo-powerprofiles-set battery
+else
+  hoopoo-powerprofiles-set ac
+fi

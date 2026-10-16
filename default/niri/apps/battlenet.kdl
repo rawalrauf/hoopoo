@@ -1,0 +1,6 @@
+window-rule {
+    match app-id=r#"^steam_app_battlenet$"# title=r#"^Battle\.net$"#
+    open-floating true
+    default-column-width { fixed 1280; }
+    default-window-height { fixed 800; }
+}

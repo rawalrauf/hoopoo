@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Print the current Hoopoo git branch
+
+echo $(git -C "$HOOPOO_PATH" rev-parse --abbrev-ref HEAD)

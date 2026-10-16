@@ -1,0 +1,29 @@
+# Dynamic theme colors
+config-file = ?"~/.config/hoopoo/current/theme/ghostty.conf"
+
+# Font
+font-family = "0xProto Nerd Font"
+font-style = Regular
+font-size = 11
+
+# Window
+window-theme = ghostty
+window-padding-x = 14
+window-padding-y = 14
+confirm-close-surface=false
+resize-overlay = never
+gtk-toolbar-style = flat
+
+# Cursor styling
+cursor-style = "block"
+cursor-style-blink = false
+
+# Cursor styling + SSH session terminfo
+# (all shell integration options must be passed together)
+shell-integration-features = no-cursor,ssh-env
+
+# Slowdown mouse scrolling
+mouse-scroll-multiplier = 0.95
+
+# Fix general slowness on niri (https://github.com/ghostty-org/ghostty/discussions/3224)
+async-backend = epoll

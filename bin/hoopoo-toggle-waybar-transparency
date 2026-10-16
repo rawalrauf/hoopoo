@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# hoopoo:summary=Toggle Waybar background transparency
+# hoopoo:examples=hoopoo toggle waybar-transparency
+
+STYLE_CSS="$HOME/.config/waybar/style.css"
+TRANSPARENT_CSS="$HOME/.config/waybar/transparent.css"
+STATE_FILE="$HOME/.local/state/hoopoo/toggles/waybar-transparent"
+
+if [[ -f $STATE_FILE ]]; then
+  rm -f "$STATE_FILE" "$TRANSPARENT_CSS"
+  sed -i '/@import "transparent.css";/d' "$STYLE_CSS"
+  notify-send -u low "󰍜  Waybar background restored"
+else
+  mkdir -p "$(dirname "$STATE_FILE")"
+  touch "$STATE_FILE"
+  printf 'window#waybar,\nwindow#waybar * {\n    background-color: transparent;\n}\nwindow#waybar {\n    border-bottom: none;\n}\n' > "$TRANSPARENT_CSS"
+  sed -i '/@import.*waybar.css/a @import "transparent.css";' "$STYLE_CSS"
+  notify-send -u low "󰍜  Waybar background transparent"
+fi

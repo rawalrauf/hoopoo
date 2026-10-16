@@ -1,0 +1,5 @@
+window-rule {
+    match app-id="com.libretro.RetroArch"
+    open-fullscreen true
+    opacity 1.0
+}

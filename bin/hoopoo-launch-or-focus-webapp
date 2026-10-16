@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# hoopoo:summary=Construct app-id and launch or focus a web app in Niri
+# hoopoo:args=<url> [flags...]
+
+if (($# == 0)); then
+  echo "Usage: hoopoo-launch-or-focus-webapp <url> [flags...]"
+  exit 1
+fi
+
+URL="$1"
+
+# 1. Extract clean domain (e.g., "https://www.youtube.com/watch?v=123" -> "youtube.com")
+CLEAN_DOMAIN=$(echo "$URL" | sed -E 's|^[a-zA-Z0-9+.-]+://||; s|^www\.||; s|/.*$||')
+
+# 2. Check if a window for this domain is ALREADY running in Niri (matches any browser prefix)
+RUNNING_APP_ID=$(niri msg -j windows 2>/dev/null | jq -r --arg domain "$CLEAN_DOMAIN" '
+  .[] | select(.app_id != null) | select(.app_id | test("^.*-" + $domain + "__-Default$")) | .app_id
+' | head -n 1)
+
+if [[ -n "$RUNNING_APP_ID" && "$RUNNING_APP_ID" != "null" ]]; then
+  # Use the exact app_id of the active window so hoopoo-launch-or-focus hits a 100% match
+  APP_ID="$RUNNING_APP_ID"
+else
+  # 3. No window open: determine browser prefix to use for launching a new instance
+  browser=$(xdg-settings get default-web-browser 2>/dev/null)
+
+  case $browser in
+    google-chrome*|chrome-*) prefix="chrome" ;;
+    brave*|brave-browser*)   prefix="brave" ;;
+    chromium*)               prefix="chromium" ;;
+    microsoft-edge*|msedge*) prefix="msedge" ;;
+    opera*)                  prefix="opera" ;;
+    vivaldi*)                prefix="vivaldi" ;;
+    helium*)                 prefix="helium" ;;
+    thorium*)                prefix="thorium" ;;
+    *)
+      # Fallback scan if default browser is Firefox
+      for b in vivaldi brave chrome chromium msedge opera helium thorium; do
+        if command -v "$b" &>/dev/null || command -v "${b}-browser" &>/dev/null || command -v "google-chrome-stable" &>/dev/null; then
+          prefix="$b"
+          break
+        fi
+      done
+      prefix="${prefix:-chrome}"
+      ;;
+  esac
+
+  APP_ID="${prefix}-${CLEAN_DOMAIN}__-Default"
+fi
+
+# 4. Construct the launch command to pass forward
+LAUNCH_COMMAND="hoopoo-launch-webapp $@"
+
+# 5. Delegate focusing/launching to base script
+exec hoopoo-launch-or-focus "$APP_ID" "$LAUNCH_COMMAND"

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# hoopoo:summary=Install Heroic Games Launcher (Epic, GOG, Amazon Prime Gaming) with graphics drivers.
+# hoopoo:requires-sudo=true
+
+set -e
+
+echo "Installing Heroic Games Launcher..."
+hoopoo-pkg-add heroic-games-launcher-bin
+hoopoo-install-gaming-gpu-lib32
+
+setsid gtk-launch heroic >/dev/null 2>&1 &

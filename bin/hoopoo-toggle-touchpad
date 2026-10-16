@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# hoopoo:summary=Enable, disable, or toggle the touchpad
+# hoopoo:args=[on|off|toggle]
+
+STATE_FILE="$HOME/.local/state/hoopoo/toggles/niri/touchpad-disabled.kdl"
+
+enable() {
+  rm -f "$STATE_FILE"
+  hoopoo-restart-niri
+  hoopoo-swayosd-client --custom-icon input-touchpad-symbolic --custom-message "Touchpad enabled"
+}
+
+disable() {
+  mkdir -p "$(dirname "$STATE_FILE")"
+  printf 'input {\n    touchpad {\n        off\n    }\n}\n' > "$STATE_FILE"
+  hoopoo-restart-niri
+  hoopoo-swayosd-client --custom-icon touchpad-disabled-symbolic --custom-message "Touchpad disabled"
+}
+
+case "${1:-toggle}" in
+  on) enable ;;
+  off) disable ;;
+  toggle) hoopoo-niri-toggle-enabled touchpad-disabled && enable || disable ;;
+esac

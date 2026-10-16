@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# hoopoo:summary=Display keyboard brightness level using SwayOSD on the current monitor.
+# hoopoo:args=<0-100>
+# hoopoo:examples=hoopoo swayosd kbd brightness 0 | hoopoo swayosd kbd brightness 50 | hoopoo swayosd kbd brightness 100
+
+percent="$1"
+
+progress="$(awk -v p="$percent" 'BEGIN{printf "%.2f", p/100}')"
+[[ $progress == "0.00" ]] && progress="0.01"
+
+hoopoo-swayosd-client \
+  --custom-icon keyboard-brightness-symbolic \
+  --custom-progress "$progress" \
+  --custom-progress-text "${percent}%"

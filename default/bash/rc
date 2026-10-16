@@ -1,0 +1,6 @@
+source ~/.local/share/hoopoo/default/bash/envs
+source ~/.local/share/hoopoo/default/bash/shell
+source ~/.local/share/hoopoo/default/bash/aliases
+source ~/.local/share/hoopoo/default/bash/functions
+source ~/.local/share/hoopoo/default/bash/init
+[[ $- == *i* ]] && bind -f ~/.local/share/hoopoo/default/bash/inputrc
