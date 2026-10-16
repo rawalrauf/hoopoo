@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# hoopoo:summary=Create a desktop launcher for a terminal UI app
+# hoopoo:args=[name command window-style icon-url]
+
+set -e
+
+DESKTOP_DIR="$HOME/.local/share/applications"
+ICON_DIR="$HOME/.local/share/icons/hicolor/512x512@2/apps"
+
+if (($# != 4)); then
+  echo -e "\e[32mLet's create a TUI shortcut you can start with the app launcher.\n\e[0m"
+  APP_NAME=$(gum input --prompt "Name> " --placeholder "My TUI")
+  APP_EXEC=$(gum input --prompt "Launch Command> " --placeholder "lazydocker or bash -c 'dust; read -n 1 -s'")
+  WINDOW_STYLE=$(gum choose --header "Window style" float tile)
+  ICON_URL=$(gum input --prompt "Icon URL> " --placeholder "See https://dashboardicons.com")
+else
+  APP_NAME="$1"; APP_EXEC="$2"; WINDOW_STYLE="$3"; ICON_URL="$4"
+fi
+
+[[ -z $APP_NAME || -z $APP_EXEC || -z $ICON_URL ]] && { echo "You must set app name, command, and icon URL!"; exit 1; }
+
+APP_SLUG=$(echo "$APP_NAME" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/-$//')
+if [[ $WINDOW_STYLE == "float" ]]; then APP_ID="org.hoopoo.$APP_SLUG"; else APP_ID="org.hoopoo.$APP_SLUG.tile"; fi
+
+ICON_PATH="$ICON_DIR/$APP_ID.png"
+mkdir -p "$ICON_DIR" "$DESKTOP_DIR"
+
+if [[ $ICON_URL =~ ^https?:// ]]; then
+  curl -sL -o "$ICON_PATH" "$ICON_URL" || { echo "Error: Failed to download icon."; exit 1; }
+else
+  cp "$ICON_URL" "$ICON_PATH"
+fi
+
+cat >"$DESKTOP_DIR/$APP_ID.desktop" <<EOF
+[Desktop Entry]
+Version=1.0
+Name=$APP_NAME
+Comment=$APP_NAME
+Exec=hoopoo-launch-tui --app-id=$APP_ID --title="$APP_NAME" $APP_EXEC
+Terminal=false
+Type=Application
+Icon=$ICON_PATH
+StartupNotify=true
+EOF
+
+update-desktop-database "$DESKTOP_DIR" &>/dev/null
+gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" &>/dev/null
+
+if (($# != 4)); then echo -e "You can now find $APP_NAME using the app launcher (SUPER + SPACE)\n"; fi

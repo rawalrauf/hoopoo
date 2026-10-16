@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# hoopoo:summary=Toggle nightlight screen temperature
+# hoopoo:examples=hoopoo toggle nightlight
+
+ON_TEMP=4000
+OFF_TEMP=6500
+
+if pgrep -x wlsunset >/dev/null; then
+  pkill -x wlsunset
+  notify-send -u low "   Daylight screen temperature"
+else
+  setsid uwsm-app -- wlsunset -t $ON_TEMP -T $OFF_TEMP -S 00:01 -s 23:59 &
+  notify-send -u low "  Nightlight screen temperature"
+fi

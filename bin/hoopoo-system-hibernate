@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# hoopoo:summary=Hibernate the system without triggering hyprlock
+# hoopoo:group=system
+# hoopoo:name=hibernate
+# hoopoo:examples=hoopoo system hibernate
+
+touch /tmp/hoopoo-hibernating
+systemctl hibernate

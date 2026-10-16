@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# hoopoo:summary=Remove preinstalled Hoopoo applications (web apps, TUIs, and selected packages).
+
+if gum confirm "Are you sure you want to remove all preinstalled web apps, TUI wrappers, and desktop applications?" </dev/tty; then
+  echo -e "Removing preinstalled Hoopoo applications...\n"
+
+  hoopoo-webapp-remove-all
+  hoopoo-tui-remove-all
+
+  hoopoo-refresh-niri
+
+  # Remove npx stubs
+  rm -f ~/.local/bin/opencode ~/.local/bin/ghui
+
+  hoopoo-pkg-drop \
+    aether \
+    typora \
+    spotify \
+    libreoffice-fresh \
+    lazydocker \
+    keepassxc \
+    opencode
+fi

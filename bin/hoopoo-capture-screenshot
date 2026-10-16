@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# hoopoo:summary=Take a screenshot
+# hoopoo:group=capture
+# hoopoo:args=[smart|region|window|fullscreen] [--editor=<name>]
+# hoopoo:examples=hoopoo screenshot | hoopoo capture screenshot region
+# hoopoo:aliases=hoopoo screenshot
+
+OUTPUT_DIR="$HOME/Pictures/Screenshots"
+mkdir -p "$OUTPUT_DIR"
+
+SCREENSHOT_EDITOR="${HOOPOO_SCREENSHOT_EDITOR:-satty}"
+
+for arg in "$@"; do
+  if [[ $arg == --editor=* ]]; then
+    SCREENSHOT_EDITOR="${arg#--editor=}"
+  fi
+done
+
+open_editor() {
+  local filepath="$1"
+  if [[ $SCREENSHOT_EDITOR == "satty" ]]; then
+    satty --filename "$filepath" \
+      --output-filename "$filepath" \
+      --actions-on-enter save-to-clipboard \
+      --save-after-copy \
+      --copy-command 'wl-copy'
+  else
+    $SCREENSHOT_EDITOR "$filepath"
+  fi
+}
+
+wait_for_screenshot() {
+  local before="$1"
+  local timeout=5
+  local elapsed=0
+  while (( elapsed < timeout * 10 )); do
+    local latest
+    latest=$(find "$OUTPUT_DIR" -name "*.png" -newer "$before" 2>/dev/null | sort | tail -1)
+    [[ -n $latest ]] && echo "$latest" && return 0
+    sleep 0.1
+    (( elapsed++ ))
+  done
+  return 1
+}
+
+MODE="${1:-smart}"
+
+MARKER=$(mktemp "$OUTPUT_DIR/.marker.XXXXXX")
+
+case "$MODE" in
+fullscreen)
+  niri msg action screenshot-screen
+  ;;
+window)
+  niri msg action screenshot-window
+  ;;
+smart | region | *)
+  niri msg action screenshot
+  ;;
+esac
+
+FILEPATH=$(wait_for_screenshot "$MARKER")
+rm -f "$MARKER"
+
+[[ -z $FILEPATH ]] && exit 0
+
+(
+  ACTION=$(notify-send "Screenshot saved" "Edit with Super + Alt + , (or click this)" -t 10000 -i "$FILEPATH" -A "default=edit")
+  [[ $ACTION == "default" ]] && open_editor "$FILEPATH"
+) >/dev/null 2>&1 &

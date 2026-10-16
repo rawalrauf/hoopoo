@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# hoopoo:summary=Reset all Hoopoo user configs to the defaults
+# hoopoo:requires-sudo=true
+
+set -e
+
+# Overwrite all user configs with the Hoopoo defaults.
+
+if (( EUID == 0 )); then
+  echo "Error: This script should not be run as root"
+  exit 1
+fi
+
+echo "Resetting all Hoopoo configs"
+cp -R ~/.local/share/hoopoo/config/* ~/.config/
+cp ~/.local/share/hoopoo/default/bashrc ~/.bashrc
+echo '[[ -f ~/.bashrc ]] && . ~/.bashrc' | tee ~/.bash_profile >/dev/null
+
+$(bash $HOOPOO_PATH/install/config/theme.sh)
+
+hoopoo-refresh-limine
+hoopoo-refresh-plymouth
+hoopoo-nvim-setup

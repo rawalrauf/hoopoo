@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Detect ASUS ExpertBook B9406 series laptops on Intel Panther Lake.
+
+hoopoo-hw-match "B9406" && hoopoo-hw-intel-ptl

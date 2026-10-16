@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# hoopoo:summary=Initialize keyboard brightness save state at login for reliable lid-close restore.
+# hoopoo:hidden=true
+
+device=""
+for candidate in /sys/class/leds/*kbd_backlight*; do
+  if [[ -e $candidate ]]; then
+    device="$(basename "$candidate")"
+    break
+  fi
+done
+
+[[ -z $device ]] && exit 0
+
+current="$(brightnessctl -d "$device" get)"
+
+if (( current == 0 )); then
+  brightnessctl -d "$device" set 1 >/dev/null
+  brightnessctl -sd "$device" set 0 >/dev/null
+else
+  brightnessctl -sd "$device" set 0 >/dev/null
+  brightnessctl -rd "$device" >/dev/null
+fi

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# hoopoo:summary=Check if a touchscreen or touch device is present
+
+grep -qi "touchscreen\|multi-touch\|wacom" /proc/bus/input/devices

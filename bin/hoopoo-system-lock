@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# hoopoo:summary=Lock the computer and turn off the display
+# hoopoo:group=system
+# hoopoo:name=lock
+# hoopoo:examples=hoopoo system lock
+
+# Ensure 1password is locked
+if pgrep -x "1password" >/dev/null; then
+  1password --lock &
+fi
+
+if ! pidof hyprlock >/dev/null; then
+  if [[ ${HOOPOO_LOCK_ONLY:-false} == "true" ]]; then
+    hyprlock --immediate-render &
+    sleep 1
+  else
+    (
+      hyprlock --immediate-render
+      hoopoo-system-wake
+    ) &
+  fi
+fi

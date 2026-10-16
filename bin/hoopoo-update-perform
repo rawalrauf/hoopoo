@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# hoopoo:summary=Run the full Hoopoo update pipeline
+# hoopoo:requires-sudo=true
+
+set -e
+
+# Ensure idle lock doesn't trigger during updates
+pkill -x swayidle || true
+
+# Perform all update steps
+hoopoo-update-keyring
+hoopoo-update-available-reset
+hoopoo-update-system-pkgs
+hoopoo-migrate
+hoopoo-update-aur-pkgs
+hoopoo-update-orphan-pkgs
+hoopoo-hook post-update
+
+hoopoo-update-analyze-logs
+
+hoopoo-update-restart
+
+# Re-enable idle lock after updates
+hoopoo-restart-swayidle
