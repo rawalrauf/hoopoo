@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# hoopoo:summary=Check which hoopoo mirror packages are referenced in the repo
+# hoopoo:group=dev
+
+REPO_DIR="${HOOPOO_PATH:-$HOME/.local/share/hoopoo}"
+HOOPOO_DB_URL="https://github.com/rawalrauf/hoopoo-pkgs/releases/download/stable/hoopoo.db"
+HOOPOO_RELEASE_URL="https://github.com/rawalrauf/hoopoo-pkgs/releases/download/stable/hoopoo.db"
+
+echo "Fetching hoopoo package list..."
+hoopoo_pkgs=$(curl -s "$HOOPOO_DB_URL" | zstd -d 2>/dev/null | tar -t 2>/dev/null | grep "/$" | sed 's|/||' | sed 's|-[^-]*-[^-]*$||' | sort -u)
+
+echo "Fetching hoopoo package list..."
+hoopoo_pkgs=$(curl -s "https://api.github.com/repos/rawalrauf/hoopoo-pkgs/releases/tags/stable" | python3 -c "
+import sys,json,re
+d=json.load(sys.stdin)
+for a in d.get('assets',[]):
+    if a['name'].endswith('.pkg.tar.zst') and 'debug' not in a['name']:
+        print(re.sub(r'-[^-]+-[^-]+-[^-]+\.pkg\.tar\.zst\$','',a['name']))
+" 2>/dev/null | sort -u)
+
+echo ""
+printf "%-40s %-10s %-12s %s\n" "PACKAGE" "IN_HOOPOO" "IN_OFFICIAL" "REFERENCED_IN"
+echo "$(printf '%.0s-' {1..120})"
+
+while IFS= read -r pkg; do
+  [[ -z $pkg ]] && continue
+
+  in_hoopoo=$(echo "$hoopoo_pkgs" | grep -c "^${pkg}$" 2>/dev/null)
+  in_official=$(pacman -Si "$pkg" 2>/dev/null | grep "^Repository" | grep -vc "hoopoo\|hoopoo" 2>/dev/null)
+
+  refs=$(grep -rl "\b${pkg}\b" "$REPO_DIR" \
+    --include="*.sh" --include="*.packages" --include="*.kdl" \
+    --include="*.conf" --include="*.toml" --include="*.yml" \
+    2>/dev/null | grep -v ".git/" | sed "s|$REPO_DIR/||" | tr '\n' ',' | sed 's/,$//')
+
+  [[ -z $refs ]] && continue
+
+  [[ "$in_hoopoo" -gt 0 ]] && hoopoo_str="yes" || hoopoo_str="NO"
+  [[ "$in_official" -gt 0 ]] && official_str="yes" || official_str="NO"
+
+  printf "%-40s %-10s %-12s %s\n" "$pkg" "$hoopoo_str" "$official_str" "$refs"
+done <<< "$hoopoo_pkgs"

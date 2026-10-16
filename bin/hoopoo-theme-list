@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# hoopoo:summary=List available themes
+# hoopoo:examples=hoopoo theme list | hoopoo theme set "Tokyo Night"
+
+{
+  find ~/.config/hoopoo/themes/ -mindepth 1 -maxdepth 1 \( -type d -o -type l \) -printf '%f\n'
+  find "$HOOPOO_PATH/themes/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
+} | sort -u | while read -r name; do
+  echo "$name" | sed -E 's/(^|-)([a-z])/\1\u\2/g; s/-/ /g'
+done

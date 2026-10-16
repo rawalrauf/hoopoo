@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# hoopoo:summary=Set the Plymouth boot theme from an Hoopoo theme
+# hoopoo:args=<theme-name>
+# hoopoo:requires-sudo=true
+
+# Resolve a theme by name and apply its unlock.png + colors.toml as the
+# Plymouth boot screen via hoopoo-plymouth-set.
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: hoopoo-plymouth-set-by-theme <theme-name>" >&2
+  exit 1
+fi
+
+theme=$1
+
+if [[ -d ~/.config/hoopoo/themes/$theme ]]; then
+  theme_dir=~/.config/hoopoo/themes/$theme
+else
+  theme_dir="$HOOPOO_PATH/themes/$theme"
+fi
+
+bg=$(awk -F'"' '/^background/{print $2}' "$theme_dir/colors.toml")
+text=$(awk -F'"' '/^foreground/{print $2}' "$theme_dir/colors.toml")
+surface=$(awk -F'"' '/^color0/{print $2}' "$theme_dir/colors.toml")
+
+exec hoopoo-plymouth-set "$bg" "$text" "$theme_dir/unlock.png" "$surface"

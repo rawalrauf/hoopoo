@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# hoopoo:summary=Install a hook into ~/.config/hoopoo/hooks/<type>.d/
+# hoopoo:group=hook
+# hoopoo:name=install
+# hoopoo:args=<type> <file>
+# hoopoo:examples=hoopoo hook install post-update ~/my-hook
+
+set -e
+
+if (( $# != 2 )); then
+  echo "Usage: hoopoo-hook-install <type> <file>"
+  exit 1
+fi
+
+HOOK_TYPE=$1
+HOOK_FILE=$2
+HOOK_DIR="$HOME/.config/hoopoo/hooks/$HOOK_TYPE.d"
+HOOK_NAME=$(basename "$HOOK_FILE")
+HOOK_PATH="$HOOK_DIR/$HOOK_NAME"
+
+if [[ ! -f $HOOK_FILE ]]; then
+  echo "Hook file not found: $HOOK_FILE"
+  exit 1
+fi
+
+mkdir -p "$HOOK_DIR"
+cp "$HOOK_FILE" "$HOOK_PATH"
+chmod 755 "$HOOK_PATH"
+
+echo "Installed $HOOK_TYPE hook: $HOOK_PATH"

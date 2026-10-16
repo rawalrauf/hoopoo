@@ -1,0 +1,42 @@
+// Systemd & DBus fixes first
+//spawn-sh-at-startup "systemctl --user import-environment $(env | cut -d'=' -f 1)"
+//spawn-sh-at-startup "dbus-update-activation-environment --systemd --all"
+
+// Theme-sensitive / visual apps
+spawn-sh-at-startup "uwsm app -- swaybg -i ~/.config/hoopoo/current/background -m fill"
+spawn-sh-at-startup "hoopoo-toggle-enabled waybar-off || uwsm app -- waybar"
+//spawn-at-startup "uwsm" "app" "--" "swayosd-server"
+spawn-at-startup "uwsm" "app" "--" "mako"
+spawn-sh-at-startup "uwsm app -- swayidle -w -C ~/.config/swayidle/swayidle.conf"
+
+// Polkit agent
+spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+
+// Auto-mount removable drives
+spawn-sh-at-startup "uwsm app -- udiskie --automount --no-notify --no-tray"
+
+// Power profile based on AC/battery state
+spawn-sh-at-startup "hoopoo-powerprofiles-init"
+
+// First boot setup (runs once, deletes its own marker after)
+spawn-sh-at-startup "hoopoo-first-run"
+
+// Monitor event watcher for recover on disconnect
+spawn-sh-at-startup "uwsm app -- hoopoo-niri-monitor-watch"
+
+// Watch niri window focus to hide active window title in waybar when focus is lost
+spawn-sh-at-startup "uwsm app -- hoopoo-waybar-window-title-watch"
+
+// Pre-warm keybindings cache so first open is instant
+spawn-sh-at-startup "sleep 3 && hoopoo-menu-keybindings --print > /dev/null 2>&1 &"
+
+// Preload ghostty so subsequent launches are instant (only if it's the default terminal)
+spawn-sh-at-startup "hoopoo-cmd-present ghostty && [[ $(head -1 ~/.config/xdg-terminals.list | grep -v '^#') == 'com.mitchellh.ghostty.desktop' ]] && ghostty --initial-window=false &"
+
+// Post-boot hooks from ~/.config/hoopoo/hooks/post-boot.d/
+spawn-sh-at-startup "sleep 2 && hoopoo-hook post-boot"
+
+// Initialize keyboard brightness save state for reliable lid-close restore
+spawn-sh-at-startup "hoopoo-brightness-keyboard-init"
+
+

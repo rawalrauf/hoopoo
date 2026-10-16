@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# hoopoo:summary=Set or cycle niri output scaling through 1x, 1.25x, 1.5x, 2x
+# hoopoo:args=[--set <scale>|--reverse|--current]
+
+SCALES=(1 1.25 1.5 2)
+
+OUTPUT=$(niri msg outputs 2>/dev/null | grep -oP '\(\K[^)]+' | grep "eDP" | head -1)
+[[ -z $OUTPUT ]] && OUTPUT=$(niri msg --json focused-output 2>/dev/null | jq -r '.name // empty')
+
+if [[ -z $OUTPUT ]]; then
+  notify-send -u low "󰍹  No output found"
+  exit 1
+fi
+
+CURRENT_SCALE=$(niri msg outputs 2>/dev/null | grep -A10 "($OUTPUT)" | grep "Scale:" | awk '{print $2}' | head -1)
+
+if [[ "$1" == "--current" ]]; then
+  echo "$CURRENT_SCALE"
+  exit 0
+fi
+
+if [[ "$1" == "--set" && -n "$2" ]]; then
+  NEW_SCALE="$2"
+else
+  CURRENT_IDX=$(awk -v s="$CURRENT_SCALE" -v list="${SCALES[*]}" 'BEGIN {
+    n = split(list, arr, " ")
+    best = 0; best_diff = 1e9
+    for (i = 1; i <= n; i++) {
+      d = s - arr[i]; if (d < 0) d = -d
+      if (d < best_diff) { best_diff = d; best = i - 1 }
+    }
+    print best
+  }')
+
+  if [[ "$1" == "--reverse" ]]; then
+    NEW_IDX=$(( (CURRENT_IDX - 1 + ${#SCALES[@]}) % ${#SCALES[@]} ))
+  else
+    NEW_IDX=$(( (CURRENT_IDX + 1) % ${#SCALES[@]} ))
+  fi
+
+  NEW_SCALE=${SCALES[$NEW_IDX]}
+fi
+
+niri msg output "$OUTPUT" scale "$NEW_SCALE"
+
+MONITORS_CONF="$HOME/.config/niri/monitors.kdl"
+if [[ -f $MONITORS_CONF ]]; then
+  if grep -qE "^\s*scale " "$MONITORS_CONF"; then
+    sed -i "s|^\([[:space:]]*\)scale [0-9.]*|\1scale $NEW_SCALE|" "$MONITORS_CONF"
+  elif grep -qE "^/-output \"$OUTPUT\"" "$MONITORS_CONF"; then
+    sed -i "s|^/-output \"$OUTPUT\"|output \"$OUTPUT\"|" "$MONITORS_CONF"
+    sed -i "/output \"$OUTPUT\"/,/^}/ s|//\s*scale [0-9.]*|scale $NEW_SCALE|" "$MONITORS_CONF"
+  fi
+fi
+
+notify-send -u low "󰍹  Display scaling set to ${NEW_SCALE}x"

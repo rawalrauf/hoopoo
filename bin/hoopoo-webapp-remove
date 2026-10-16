@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# hoopoo:summary=Remove web app desktop launchers
+# hoopoo:args=[name...]
+
+set -e
+
+DESKTOP_DIR="$HOME/.local/share/applications"
+ICON_DIR="$HOME/.local/share/icons/hicolor/512x512@2/apps"
+
+url_to_app_id_base() {
+  local stripped
+  stripped=$(echo "$1" | sed -E 's|^[a-zA-Z0-9+.-]+://||')
+  stripped="${stripped%/}"
+  if [[ $stripped == */* ]]; then
+    local domain="${stripped%%/*}" path="${stripped#*/}"
+    path="${path%/}"; path="${path//\//_}"
+    echo "${domain}__${path}"
+  else
+    echo "${stripped}__"
+  fi
+}
+
+if (($# == 0)); then
+  declare -A NAME_TO_FILE
+  while IFS= read -r -d '' file; do
+    grep -q '^NoDisplay=true' "$file" && continue
+    grep -qE '^Exec=.*(hoopoo-launch-webapp|hoopoo-webapp-handler)' "$file" || continue
+    name=$(grep "^Name=" "$file" | cut -d= -f2- | head -1)
+    [[ -z $name ]] && name=$(basename "${file%.desktop}")
+    NAME_TO_FILE["$name"]="$file"
+    WEB_APPS+=("$name")
+  done < <(find "$DESKTOP_DIR" -maxdepth 1 -name '*.desktop' -print0)
+
+  (( ${#WEB_APPS[@]} )) || { echo "No web apps to remove."; exit 1; }
+
+  IFS=$'\n' SORTED=($(sort <<<"${WEB_APPS[*]}")); unset IFS
+  mapfile -t APP_NAMES < <(gum choose --no-limit --header "Select web app to remove..." --selected-prefix="✗ " "${SORTED[@]}")
+else
+  APP_NAMES=("$@")
+fi
+
+(( ${#APP_NAMES[@]} )) || exit 0
+
+for APP_NAME in "${APP_NAMES[@]}"; do
+  DESKTOP_FILE="${NAME_TO_FILE[$APP_NAME]:-$DESKTOP_DIR/$APP_NAME.desktop}"
+  [[ -f $DESKTOP_FILE ]] || { echo "Warning: Could not find '$APP_NAME'"; continue; }
+
+  EXEC_URL=$(grep "^Exec=" "$DESKTOP_FILE" | head -1 | awk '{print $2}')
+  ICON_PATH=$(grep "^Icon=" "$DESKTOP_FILE" | cut -d= -f2-)
+  APP_ID_BASE=$(url_to_app_id_base "$EXEC_URL")
+
+  rm -f "$DESKTOP_FILE"
+  [[ -n $ICON_PATH && -f $ICON_PATH ]] && rm -f "$ICON_PATH"
+
+  for prefix in chrome brave msedge opera vivaldi helium thorium; do
+    rm -f "$DESKTOP_DIR/${prefix}-${APP_ID_BASE}-Default.desktop"
+  done
+
+  echo "Removed $APP_NAME"
+done
+
+update-desktop-database "$DESKTOP_DIR" &>/dev/null
+gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" &>/dev/null

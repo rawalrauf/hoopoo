@@ -1,0 +1,11 @@
+[Plymouth Theme]
+Name=Hoopoo
+Description=Hoopoo splash screen.
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/hoopoo
+ScriptFile=/usr/share/plymouth/themes/hoopoo/hoopoo.script
+ConsoleLogBackgroundColor=0x1a1b26
+MonospaceFont=Cantarell 11
+Font=Cantarell 11

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# hoopoo:summary=Print the active Hoopoo channel based on current git branch
+
+branch=$(git -C "$HOOPOO_PATH" branch --show-current 2>/dev/null)
+
+case "$branch" in
+  master|main) echo "stable" ;;
+  dev)         echo "dev" ;;
+  *)           echo "${branch:-unknown}" ;;
+esac

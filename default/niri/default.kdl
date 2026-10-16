@@ -1,0 +1,6 @@
+include "~/.local/share/hoopoo/default/niri/autostart.kdl"
+include "~/.local/share/hoopoo/default/niri/miscellaneous.kdl"
+include "~/.local/share/hoopoo/default/niri/looknfeel.kdl"
+include "~/.local/share/hoopoo/default/niri/layer-rules.kdl"
+include "~/.local/share/hoopoo/default/niri/window-rules.kdl"
+include "~/.local/share/hoopoo/default/niri/bindings.kdl"

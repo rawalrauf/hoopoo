@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# hoopoo:summary=Pick a color from the screen and copy hex to clipboard
+# hoopoo:group=capture
+# hoopoo:examples=hoopoo capture color
+
+hex=$(niri msg pick-color | grep "Hex:" | awk '{print $2}')
+[[ -z $hex ]] && exit 0
+printf '%s' "$hex" | wl-copy
+hoopoo-notification-send "󰃉" "Color copied to clipboard" "$hex" -u low
