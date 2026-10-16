@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# hoopoo:summary=Edit, set, or reset About branding
+# hoopoo:group=branding
+# hoopoo:name=about
+# hoopoo:args=<image|text|reset>
+# hoopoo:examples=hoopoo branding about image | hoopoo branding about text | hoopoo branding about reset
+
+set -euo pipefail
+
+case "${1:-}" in
+image)
+  image=$(hoopoo-menu-file "Logo image" "$HOME" "svg png")
+  if [[ -n $image ]] && hoopoo-transcode-ascii "$image" ~/.config/hoopoo/branding/about.txt --width 54 --height 26 --mode block; then
+    hoopoo-launch-about >/dev/null 2>&1
+  fi
+  ;;
+text)
+  notify-send -u low "󰈙  Editing config file" ~/.config/hoopoo/branding/about.txt
+  hoopoo-launch-editor ~/.config/hoopoo/branding/about.txt >/dev/null 2>&1 && hoopoo-launch-about >/dev/null 2>&1
+  ;;
+reset)
+  cp "$HOOPOO_PATH/icon.txt" ~/.config/hoopoo/branding/about.txt && hoopoo-launch-about >/dev/null 2>&1
+  ;;
+*)
+  echo "Usage: hoopoo-branding-about <image|text|reset>" >&2
+  exit 1
+  ;;
+esac

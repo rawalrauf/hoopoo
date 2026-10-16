@@ -1,0 +1,17 @@
+// Make the wallpaper stationary, rather than moving with workspaces.
+layer-rule {
+    match namespace="^wallpaper$"
+    place-within-backdrop true
+
+}
+
+// Set transparent workspace background color.
+layout {
+    background-color "transparent"
+
+}
+overview {
+    workspace-shadow {
+        off
+    }
+}

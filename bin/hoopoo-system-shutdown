@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# hoopoo:summary=Shut down after closing application windows
+# hoopoo:examples=hoopoo shutdown | hoopoo system shutdown
+# hoopoo:aliases=hoopoo shutdown
+
+hoopoo-state clear re*-required
+
+nohup bash -c "sleep 2 && systemctl poweroff --no-wall" >/dev/null 2>&1 &
+
+hoopoo-niri-window-close-all
+sleep 1

@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# hoopoo:summary=Enable, disable, or toggle the internal laptop display
+# hoopoo:args=<on|off|toggle|recover>
+
+STATE_FILE="$HOME/.local/state/hoopoo/toggles/niri/internal-monitor-off"
+mkdir -p "$(dirname "$STATE_FILE")"
+
+INTERNAL=$(niri msg outputs 2>/dev/null | grep -oP '\(\K[^)]+' | grep "eDP" | head -1)
+
+if [[ -z $INTERNAL ]]; then
+  notify-send -u low "󰍹  No internal display found"
+  exit 1
+fi
+
+enable() {
+  niri msg output "$INTERNAL" on
+  rm -f "$STATE_FILE"
+  notify-send -u low "󰍹  Laptop display enabled"
+}
+
+disable() {
+  if ! hoopoo-hw-external-monitors; then
+    notify-send -u low "󰍹  Can't disable the only active display"
+    exit 1
+  fi
+  niri msg output "$INTERNAL" off
+  touch "$STATE_FILE"
+  notify-send -u low "󰍹  Laptop display disabled"
+}
+
+recover() {
+  if ! hoopoo-hw-external-monitors && hoopoo-niri-toggle-enabled internal-monitor-off; then
+    enable
+  fi
+}
+
+case "$1" in
+  on) enable ;;
+  off) disable ;;
+  toggle) hoopoo-niri-toggle-enabled internal-monitor-off && enable || disable ;;
+  recover) recover ;;
+  *)
+    echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
+    exit 1
+    ;;
+esac

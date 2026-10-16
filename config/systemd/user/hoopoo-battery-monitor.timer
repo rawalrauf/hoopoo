@@ -1,0 +1,11 @@
+[Unit]
+Description=Hoopoo Battery Monitor Timer
+Requires=hoopoo-battery-monitor.service
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=10sec
+AccuracySec=5sec
+
+[Install]
+WantedBy=timers.target

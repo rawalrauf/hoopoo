@@ -1,0 +1,9 @@
+[Unit]
+Description=Hoopoo Battery Monitor Check
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/share/hoopoo/bin/hoopoo-battery-monitor
+Environment=WAYLAND_DISPLAY=wayland-1
+LogLevelMax=warning

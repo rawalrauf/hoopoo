@@ -1,0 +1,16 @@
+// Hoopoo niri configuration
+// Learn how to configure niri: https://github.com/YaLTeR/niri/wiki
+
+// ── Hoopoo defaults (do not edit these directly) ────────────────────────────
+include "~/.local/share/hoopoo/default/niri/default.kdl"
+
+// ── User config (overrides go here) ─────────────────────────────────────────
+include "~/.config/niri/autostart.kdl"
+include "~/.config/niri/monitors.kdl"
+include "~/.config/niri/input.kdl"
+include "~/.config/niri/bindings.kdl"
+include "~/.config/niri/looknfeel.kdl"
+include "~/.config/niri/window-rules.kdl"
+
+// ── Toggle flags ─────────────────────────────────────────────────────────────
+include "~/.config/niri/flags.kdl"

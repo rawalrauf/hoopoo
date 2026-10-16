@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# hoopoo:summary=Remove all web apps installed via hoopoo-webapp-install.
+
+set -e
+
+APP_DIR="${1:-$HOME/.local/share/applications}"
+ICON_DIR="$HOME/.local/share/icons/hicolor/512x512@2/apps"
+
+url_to_app_id_base() {
+  local stripped
+  stripped=$(echo "$1" | sed -E 's|^[a-zA-Z0-9+.-]+://||')
+  stripped="${stripped%/}"
+  if [[ $stripped == */* ]]; then
+    local domain="${stripped%%/*}" path="${stripped#*/}"
+    path="${path%/}"; path="${path//\//_}"
+    echo "${domain}__${path}"
+  else
+    echo "${stripped}__"
+  fi
+}
+
+mapfile -d '' files < <(find "$APP_DIR" -maxdepth 1 -name "*.desktop" -print0 2>/dev/null)
+
+webapp_files=()
+for file in "${files[@]}"; do
+  grep -qE '^Exec=.*(hoopoo-launch-webapp|hoopoo-webapp-handler)' "$file" 2>/dev/null || continue
+  grep -q '^NoDisplay=true' "$file" 2>/dev/null && continue
+  webapp_files+=("$file")
+done
+
+if (( ${#webapp_files[@]} == 0 )); then
+  echo "No web apps found."
+  exit 0
+fi
+
+for file in "${webapp_files[@]}"; do
+  app_name=$(basename "$file" .desktop)
+  exec_url=$(grep "^Exec=" "$file" | head -1 | awk '{print $2}')
+  icon_path=$(grep "^Icon=" "$file" | cut -d= -f2-)
+  app_id_base=$(url_to_app_id_base "$exec_url")
+
+  echo "Removing: $app_name"
+  rm -f "$file"
+  [[ -n $icon_path && -f $icon_path ]] && rm -f "$icon_path"
+
+  for prefix in chrome brave msedge opera vivaldi helium thorium; do
+    rm -f "$APP_DIR/${prefix}-${app_id_base}-Default.desktop"
+  done
+done
+
+update-desktop-database "$APP_DIR" &>/dev/null
+gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" &>/dev/null
+echo "All web apps removed."

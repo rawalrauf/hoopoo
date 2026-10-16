@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# hoopoo:summary=Sync Hoopoo theme to all Obsidian vaults
+# hoopoo:hidden=true
+
+CURRENT_THEME_DIR="$HOME/.config/hoopoo/current/theme"
+
+[[ -f $CURRENT_THEME_DIR/obsidian.css ]] || exit 0
+
+jq -r '.vaults | values[].path' ~/.config/obsidian/obsidian.json 2>/dev/null | while read -r vault_path; do
+  [[ -d $vault_path/.obsidian ]] || continue
+
+  theme_dir="$vault_path/.obsidian/themes/Hoopoo"
+  mkdir -p "$theme_dir"
+
+  [[ -f $theme_dir/manifest.json ]] || cat >"$theme_dir/manifest.json" <<'EOF'
+{
+  "name": "Hoopoo",
+  "version": "1.0.0",
+  "minAppVersion": "0.16.0",
+  "description": "Automatically syncs with your current Hoopoo system theme colors and fonts",
+  "author": "Hoopoo",
+  "authorUrl": "https://github.com/rawalrauf/hoopoo"
+}
+EOF
+
+  cp "$CURRENT_THEME_DIR/obsidian.css" "$theme_dir/theme.css"
+done

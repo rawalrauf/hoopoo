@@ -1,0 +1,10 @@
+window-rule {
+    match app-id=r#".*[Rr]esolve.*"#
+    open-floating true
+    opacity 1.0
+}
+
+window-rule {
+    match app-id=r#".*[Rr]esolve.*"# title=r#"^DaVinci Resolve( Studio)? - .+$"#
+    open-maximized true
+}

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# hoopoo:summary=Refresh the current theme from its templates.
+
+THEME_NAME_PATH="$HOME/.config/hoopoo/current/theme.name"
+
+if [[ -f $THEME_NAME_PATH ]]; then
+  HOOPOO_THEME_SKIP_BACKGROUND=1 hoopoo-theme-set "$(cat $THEME_NAME_PATH)"
+fi
