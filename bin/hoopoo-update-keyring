@@ -3,16 +3,16 @@
 # hoopoo:summary=Ensure the Hoopoo and Arch keyring packages are installed and populated
 # hoopoo:requires-sudo=true
 
-if hoopoo-pkg-missing hoopoo-keyring || ! sudo pacman-key --list-keys 070030E5D914817BA797F66AAF1C8F036A5E73FD &>/dev/null; then
-  sudo pacman-key --recv-keys 070030E5D914817BA797F66AAF1C8F036A5E73FD --keyserver keyserver.ubuntu.com
-  sudo pacman-key --lsign-key 070030E5D914817BA797F66AAF1C8F036A5E73FD
+if hoopoo-pkg-missing hoopoo-keyring || ! sudo pacman-key --list-keys D3931CBE26A484582489EEB7394AFBE6E502DB8F &>/dev/null; then
+  sudo pacman-key --recv-keys D3931CBE26A484582489EEB7394AFBE6E502DB8F --keyserver keyserver.ubuntu.com
+  sudo pacman-key --lsign-key D3931CBE26A484582489EEB7394AFBE6E502DB8F
 
   # This is generally not a good idea, but this is a special case because we're going to be updating
   # the full set of packages in hoopoo-update-system-pkgs right after this (and it needs latest keyring)!
   sudo pacman -Sy
   hoopoo-pkg-add hoopoo-keyring
 
-  sudo pacman-key --list-keys 070030E5D914817BA797F66AAF1C8F036A5E73FD
+  sudo pacman-key --list-keys D3931CBE26A484582489EEB7394AFBE6E502DB8F
 fi
 
 # Ensure we have the latest archlinux-keyring, maintainer keys might have changed
