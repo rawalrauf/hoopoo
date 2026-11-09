@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# hoopoo:summary=Launch the system monitor TUI (provided by btop).
-
-exec hoopoo-launch-or-focus-tui --title="System Monitor" btop

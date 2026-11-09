@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# hoopoo:summary=Overwrite the user tmux config with the Hoopoo default and reload tmux.
-
-hoopoo-refresh-config tmux/tmux.conf
-hoopoo-restart-tmux

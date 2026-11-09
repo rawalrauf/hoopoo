@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# hoopoo:summary=Check if a toggle is enabled (flag file exists)
-# hoopoo:args=<flag-name>
-
-[[ -f "$HOME/.local/state/hoopoo/toggles/$1" ]]

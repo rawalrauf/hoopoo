@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# hoopoo:summary=Show current monospace font
-# hoopoo:examples=hoopoo font current
-
-grep -oP 'font-family:\s*["'\'']?\K[^;"'\'']+' ~/.config/waybar/style.css | head -n1

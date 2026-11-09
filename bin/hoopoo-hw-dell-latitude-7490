@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# hoopoo:summary=Detect whether the computer is a Dell Latitude 7490.
-
-[[ $(cat /sys/class/dmi/id/sys_vendor 2>/dev/null) == "Dell Inc." ]] &&
-  grep -qi "Latitude 7490" /sys/class/dmi/id/product_name 2>/dev/null

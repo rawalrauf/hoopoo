@@ -129,3 +129,129 @@ if hoopoo-cmd-missing fprintd-list || ! fprintd-list "$USER" 2>/dev/null | grep 
   sed -i 's/fingerprint:enabled = .*/fingerprint:enabled = false/' ~/.config/hypr/hyprlock.conf
 fi
 ```
+
+# Go Migration Workflow (Bash → Go)
+
+When porting bash commands to Go, follow this mandatory workflow to ensure correctness and performance:
+
+## 1. Analysis Phase
+
+**For each command to port:**
+
+1. Read the hoopoo bash implementation in `bin/hoopoo-<command>`
+2. Read the omarchy bash implementation in `~/.local/share/omarchy-repos/omarchy/bin/omarchy-<command>` (if exists)
+3. Compare approaches and identify:
+   - Edge cases handled by omarchy but missing in hoopoo
+   - Better algorithms or optimizations
+   - Hardware compatibility issues (Apple Silicon, Chromebooks, Framework)
+   - Multi-device scenarios (multiple batteries, monitors, audio sinks)
+4. **Choose the better approach** - prefer omarchy's robustness if it handles more edge cases
+
+## 2. Implementation Phase
+
+**Design the Go version:**
+
+1. Create shared library code in `internal/` packages for reusable logic
+2. Keep command entry points in `cmd/hoopoo-<command>/main.go` minimal
+3. **Use goroutines where beneficial:**
+   - Parallel file reads (multiple sysfs files)
+   - Concurrent API calls (D-Bus, IPC)
+   - Multi-device queries (all batteries, all audio sinks)
+   - Background tasks (monitoring, watching for changes)
+4. Avoid goroutines for single operations (overhead > benefit)
+5. Apply performance optimizations:
+   - Cache expensive lookups (device discovery, file paths)
+   - Minimize allocations (buffer reuse, manual parsing)
+   - Direct system calls where possible (sysfs > upower, PipeWire > pulseaudio)
+
+## 3. Verification Phase
+
+**Test correctness before benchmarking:**
+
+1. Build the Go binary: `go build -ldflags="-s -w" -o bin/<command>.go ./cmd/<command>`
+2. Run both bash and Go versions side-by-side with same inputs
+3. Compare outputs - they must match exactly (unless fixing a bug)
+4. Test edge cases:
+   - No hardware present (no battery, no audio)
+   - Multiple devices (BAT0 + BAT1, multiple monitors)
+   - Missing sysfs files (older kernels, different hardware)
+   - Invalid inputs (empty strings, out of range values)
+5. **Only proceed to benchmarks when output is identical**
+
+## 4. Benchmark Phase
+
+**Measure performance improvements:**
+
+1. Use `hyperfine --warmup 3 --runs 50` for accurate measurements
+2. Compare bash vs Go versions
+3. Document speedup ratio and memory usage
+4. Verify the Go version is actually faster (no regressions)
+
+## 5. Final Review Phase
+
+**Critical - analyze the code you just wrote:**
+
+1. Read all Go files you created (`cmd/` and `internal/`)
+2. Look for:
+   - **Concurrency opportunities missed** - can goroutines speed this up?
+   - Logic errors or off-by-one bugs
+   - Missing error handling
+   - Unnecessary allocations or string conversions
+   - Hardcoded paths that should be configurable
+   - Edge cases not handled
+   - Code duplication that should be extracted
+3. Apply any improvements found
+4. Rebuild and re-benchmark if changes are significant
+
+## 6. Integration Phase
+
+**After all checks pass:**
+
+1. Keep both versions temporarily (`hoopoo-command` bash + `hoopoo-command.go` binary)
+2. Update `Makefile` to build the new Go command
+3. Document the migration in comments
+4. Once stable, remove bash version and rename `.go` binary to final name
+
+## Goroutine Guidelines
+
+**Use goroutines for:**
+- Reading multiple independent sysfs files in parallel
+- Querying multiple devices concurrently (all batteries, all audio sinks)
+- D-Bus calls that can run in parallel
+- Watch/monitor commands that need event loops
+
+**Avoid goroutines for:**
+- Single file reads (overhead > benefit)
+- Sequential operations with dependencies
+- Commands that run once and exit immediately
+- Simple data transformations
+
+**Pattern for parallel file reads:**
+```go
+type result struct {
+  value int
+  err   error
+}
+
+ch := make(chan result, len(files))
+for _, file := range files {
+  go func(f string) {
+    val, err := readInt(f)
+    ch <- result{val, err}
+  }(file)
+}
+
+for range files {
+  r := <-ch
+  // handle result
+}
+```
+
+## Success Criteria
+
+A command port is complete when:
+- ✅ Output matches bash version exactly (or fixes a known bug)
+- ✅ All edge cases tested and handled
+- ✅ Benchmarks show significant speedup (>2x minimum)
+- ✅ Final code review completed with no issues found
+- ✅ Goroutines used where beneficial for performance
