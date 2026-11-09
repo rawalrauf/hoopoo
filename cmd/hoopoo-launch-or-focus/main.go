@@ -9,7 +9,7 @@ import (
   "os/exec"
   "fmt"
 
-  "github.com/rawalrauf/hoopoo/internal/usage"
+  "hoopoo.net/internal/common/usage"
 )
 
 type Window struct {

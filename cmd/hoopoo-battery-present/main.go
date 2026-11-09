@@ -5,8 +5,8 @@ package main
 import (
   "os"
 
-  "github.com/rawalrauf/hoopoo/internal/usage"
-  "github.com/rawalrauf/hoopoo/internal/sysfs/battery"
+  "hoopoo.net/internal/common/usage"
+  "hoopoo.net/internal/sysfs/battery"
 )
 
 func main() {

@@ -7,11 +7,11 @@ import (
   "fmt"
   "os"
 
-  "github.com/rawalrauf/hoopoo/internal/usage"
-  "github.com/rawalrauf/hoopoo/internal/paths"
-  "github.com/rawalrauf/hoopoo/internal/notify"
-  "github.com/rawalrauf/hoopoo/internal/hooks"
-  "github.com/rawalrauf/hoopoo/internal/sysfs/battery"
+  "hoopoo.net/internal/common/usage"
+  "hoopoo.net/internal/common/paths"
+  "hoopoo.net/internal/common/notify"
+  "hoopoo.net/internal/common/hooks"
+  "hoopoo.net/internal/sysfs/battery"
 )
 
 const (
