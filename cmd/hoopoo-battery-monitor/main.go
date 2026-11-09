@@ -7,7 +7,6 @@ import (
   "fmt"
   "os"
 
-  "hoopoo.net/internal/common/usage"
   "hoopoo.net/internal/common/paths"
   "hoopoo.net/internal/common/notify"
   "hoopoo.net/internal/common/hooks"
@@ -19,8 +18,6 @@ const (
 )
 
 func main() {
-  usage.Message("Designed to be run by systemd timer every 30 seconds and alerts if battery is low")
-
   flagPath := fmt.Sprintf("%s/hoopoo_battery_notified", paths.Runtime())
 
   batteryLevel, err := battery.CombinedCapacity()
@@ -52,11 +49,14 @@ func main() {
 }
 
 func sendNotification(level int) {
-  glyph := "󱐋"
-  headline := "Time to recharge!"
-  description := fmt.Sprintf("Battery is down to %d%%", level)
-  soundFile := "/usr/share/sounds/freedesktop/stereo/suspend-error.oga"
-  
-  notify.SendWithGlyphAndSound(glyph, headline, description, "critical", "battery-caution", 30000, soundFile)
+  notify.Send(notify.Options{
+    Glyph:       "󱐋",
+    Headline:    "Time to recharge!",
+    Description: fmt.Sprintf("Battery is down to %d%%", level),
+    Urgency:     "critical",
+    Icon:        "battery-caution",
+    Timeout:     30000,
+    SoundFile:   "/usr/share/sounds/freedesktop/stereo/suspend-error.oga",
+  })
   hooks.Run("battery-low", fmt.Sprintf("%d", level))
 }

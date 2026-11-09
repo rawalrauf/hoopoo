@@ -3,6 +3,7 @@
 set -o pipefail
 
 HOOPOO_BIN_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+HOOPOO_PATH=$(dirname "$HOOPOO_BIN_DIR")
 METADATA_SCAN_LIMIT=80
 
 COMMAND_KEYS=()
@@ -142,6 +143,12 @@ register_command() {
   local fallback_summary=""
   local has_summary="false"
   local metadata_errors=""
+  local metadata_file="$file"
+
+  # Check if there's a cmd source file for Go binaries
+  if [[ -f "$HOOPOO_PATH/cmd/$file_binary/main.go" ]]; then
+    metadata_file="$HOOPOO_PATH/cmd/$file_binary/main.go"
+  fi
 
   while IFS= read -r line && (( line_count < METADATA_SCAN_LIMIT )); do
     line_count=$((line_count + 1))
@@ -154,13 +161,14 @@ register_command() {
       continue
     fi
 
-    if [[ ! $line =~ ^[[:space:]]*# ]]; then
+    # Support both bash (#) and Go (//) comment styles
+    if [[ ! $line =~ ^[[:space:]]*(#|//) ]]; then
       break
     fi
 
-    if [[ $line =~ ^[[:space:]]*#[[:space:]]*hoopoo:([[:alnum:]_-]+)=(.*)$ ]]; then
-      metadata_key="${BASH_REMATCH[1]}"
-      metadata_value="${BASH_REMATCH[2]}"
+    if [[ $line =~ ^[[:space:]]*(#|//)[[:space:]]*hoopoo:([[:alnum:]_-]+)=(.*)$ ]]; then
+      metadata_key="${BASH_REMATCH[2]}"
+      metadata_value="${BASH_REMATCH[3]}"
       metadata_value="${metadata_value%$'\r'}"
       metadata_value="${metadata_value//$'\t'/ }"
 
@@ -196,8 +204,8 @@ register_command() {
       *)
         ;;
       esac
-    elif [[ -z $fallback_summary && $line =~ ^[[:space:]]*#[[:space:]]*(.+)$ ]]; then
-      fallback_summary="${BASH_REMATCH[1]}"
+    elif [[ -z $fallback_summary && $line =~ ^[[:space:]]*(#|//)[[:space:]]*(.+)$ ]]; then
+      fallback_summary="${BASH_REMATCH[2]}"
       fallback_summary="${fallback_summary%$'\r'}"
       fallback_summary="${fallback_summary//$'\t'/ }"
 
@@ -205,7 +213,7 @@ register_command() {
         fallback_summary=""
       fi
     fi
-  done <"$file"
+  done <"$metadata_file"
 
   local stem="${file_binary#hoopoo-}"
   local fallback_group="$stem"

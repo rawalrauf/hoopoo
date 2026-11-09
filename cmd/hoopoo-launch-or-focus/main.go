@@ -8,8 +8,6 @@ import (
   "os"
   "os/exec"
   "fmt"
-
-  "hoopoo.net/internal/common/usage"
 )
 
 type Window struct {
@@ -18,8 +16,10 @@ type Window struct {
 }
 
 func main() {
-  requiredArgs := 1
-  usage.Message("Launch an app or focus an existing window matching a pattern\nUsage: hoopoo-launch-or-focus <app-id> [launch-command]", requiredArgs)
+  if len(os.Args) < 2 {
+    fmt.Fprintln(os.Stderr, "Usage: hoopoo-launch-or-focus [app-id] [launch-command]")
+    os.Exit(1)
+  }
 
   appID := os.Args[1]
   launchCommand := fmt.Sprintf("uwsm-app -- %s", appID)
