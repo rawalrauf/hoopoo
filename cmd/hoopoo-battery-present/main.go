@@ -5,7 +5,7 @@ package main
 import (
   "os"
 
-  "hoopoo.net/internal/sysfs/battery"
+  "hoopoo.net/internal/battery"
 )
 
 func main() {

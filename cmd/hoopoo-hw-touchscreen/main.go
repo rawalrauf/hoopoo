@@ -5,7 +5,7 @@ package main
 import (
   "os"
 
-  "hoopoo.net/internal/sysfs/hw"
+  "hoopoo.net/internal/hw"
 )
 
 func main() {

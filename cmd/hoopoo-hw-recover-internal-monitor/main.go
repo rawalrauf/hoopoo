@@ -6,7 +6,7 @@ import (
   "os"
 
   "hoopoo.net/internal/common/toggle"
-  "hoopoo.net/internal/sysfs/hw"
+  "hoopoo.net/internal/hw"
 )
 
 func main() {

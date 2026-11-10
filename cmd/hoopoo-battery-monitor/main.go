@@ -9,7 +9,7 @@ import (
   "os/exec"
 
   "hoopoo.net/internal/common/paths"
-  "hoopoo.net/internal/sysfs/battery"
+  "hoopoo.net/internal/battery"
 )
 
 const (
