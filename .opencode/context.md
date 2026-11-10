@@ -14,9 +14,10 @@ Hoopoo is an Arch Linux-based distribution focused on performance and user exper
 - 282 total commands, migrating and testing one by one
 - Commands live in `bin/hoopoo-*` (bash) and `cmd/hoopoo-*/main.go` (Go)
 - Shared Go libraries in `internal/` organized by domain:
-  - `internal/sysfs/battery/` - battery-related sysfs operations
-  - `internal/sysfs/hw/` - hardware detection
-  - `internal/common/notify/` - desktop notifications
+  - `internal/battery/` - battery-related operations
+  - `internal/hw/` - hardware detection
+  - `internal/notification/` - desktop notifications (mako integration)
+  - `internal/niri/` - niri compositor operations
   - `internal/common/hooks/` - hook execution
   - `internal/common/paths/` - path utilities
   - `internal/common/toggle/` - toggle state management
@@ -209,9 +210,26 @@ The dispatcher (`bin/hoopoo`) reads metadata directly from source files in `cmd/
 - `battery-*` (3 commands: present, remaining, monitor)
 - `hw-*` (20 commands: hardware detection, GPU checks, input devices, monitor recovery)
 - `niri-toggle-*` (2 commands: enabled, disabled - for niri toggle state)
+- `notification-*` (2 commands: send, dismiss - desktop notifications)
+- `version-*` (3 commands: version, branch, pkgs)
+- `restart-*` (2 commands: mako, niri - reload services)
+- `sudo-reset` (1 command: reset faillock)
 - `launch-or-focus` (1 command: window management)
 
-**Total:** 26 Go commands migrated out of 282
+**Total:** 34 Go commands migrated out of 282 (12.1%)
+
+## Architecture Principles
+
+**Domain-focused organization:**
+- Organize by what (battery, hw, notification) not how (sysfs, dbus)
+- Commands call binaries instead of internal functions when possible
+- Internal packages provide reusable functionality
+- Clean separation between infrastructure and domain logic
+
+**Binary vs Function usage:**
+- Commands that need cross-script compatibility: create binaries (notification-send)
+- Commands calling other commands: use binaries (battery-monitor calls notification-send)
+- Internal reusable logic: use packages (toggle, paths, hooks)
 
 ## Code Style
 
@@ -233,16 +251,22 @@ toggle.NiriEnabled("internal-monitor-off") → toggles/niri/internal-monitor-off
 
 **Notification API:**
 ```go
-notify.Send(notify.Options{
+notification.Send(notification.Options{
   Glyph:       "🔋",
   Headline:    "Battery Low",
   Description: "15% remaining",
-  Urgency:     notify.Critical,
-  SoundFile:   "battery-low",
+  Urgency:     "critical",
+  Icon:        "battery-caution",
+  Timeout:     5000,
 })
 ```
 
 All fields are optional.
+
+**Common patterns:**
+- Use `paths.State()`, `paths.Hoopoo()`, `paths.Runtime()` for path resolution
+- Call external binaries with `exec.Command()` for cross-script compatibility
+- Use internal packages only for reusable logic within Go commands
 
 ## Success Criteria
 
