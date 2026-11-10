@@ -11,7 +11,7 @@ Hoopoo is an Arch Linux-based distribution focused on performance and user exper
 **hoopoo/** (this repo)
 - Main development repository for core commands and utilities
 - Currently on `go` branch doing bash → Go migration
-- 282 total commands, 23 migrated to Go so far
+- 282 total commands/script, we are migrating and testing one by one
 - Commands live in `bin/hoopoo-*` (bash) and `cmd/hoopoo-*/main.go` (Go)
 - Shared Go libraries in `internal/` organized by domain:
   - `internal/sysfs/battery/` - battery-related sysfs operations
