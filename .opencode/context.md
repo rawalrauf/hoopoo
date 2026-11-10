@@ -11,7 +11,7 @@ Hoopoo is an Arch Linux-based distribution focused on performance and user exper
 **hoopoo/** (this repo)
 - Main development repository for core commands and utilities
 - Currently on `go` branch doing bash → Go migration
-- 282 total commands/script, we are migrating and testing one by one
+- 282 total commands, migrating and testing one by one
 - Commands live in `bin/hoopoo-*` (bash) and `cmd/hoopoo-*/main.go` (Go)
 - Shared Go libraries in `internal/` organized by domain:
   - `internal/sysfs/battery/` - battery-related sysfs operations
@@ -19,6 +19,13 @@ Hoopoo is an Arch Linux-based distribution focused on performance and user exper
   - `internal/common/notify/` - desktop notifications
   - `internal/common/hooks/` - hook execution
   - `internal/common/paths/` - path utilities
+  - `internal/common/toggle/` - toggle state management
+
+**hoopoo-bash/**
+- Reference copy of bash scripts (on `dev` branch)
+- Used for benchmarking Go binaries against original bash implementations
+- Reference for fixing/debugging migrated commands
+- Keep this on `dev` or `master` branch, never switch to `go` branch
 
 **hoopoo-pkgs/**
 - Package definitions for Hoopoo-specific packages
@@ -200,10 +207,11 @@ The dispatcher (`bin/hoopoo`) reads metadata directly from source files in `cmd/
 
 **Completed command groups:**
 - `battery-*` (3 commands: present, remaining, monitor)
-- `hw-*` (19 commands: hardware detection, GPU checks, input devices)
+- `hw-*` (20 commands: hardware detection, GPU checks, input devices, monitor recovery)
+- `niri-toggle-*` (2 commands: enabled, disabled - for niri toggle state)
 - `launch-or-focus` (1 command: window management)
 
-**Total:** 23 Go commands migrated out of 282
+**Total:** 26 Go commands migrated out of 282
 
 ## Code Style
 
@@ -213,6 +221,15 @@ The dispatcher (`bin/hoopoo`) reads metadata directly from source files in `cmd/
 - One-line package comments only (no function docs in internal packages)
 - Minimal comments in cmd files (just metadata)
 - No "Get" prefixes (`Level()` not `GetLevel()`)
+
+**Toggle API (follows bash command naming):**
+```go
+// Generic toggles (root level) - matches hoopoo-toggle-enabled
+toggle.HoopooEnabled("waybar-off")       → toggles/waybar-off
+
+// Niri toggles (subdirectory) - matches hoopoo-niri-toggle-enabled  
+toggle.NiriEnabled("internal-monitor-off") → toggles/niri/internal-monitor-off.kdl
+```
 
 **Notification API:**
 ```go
