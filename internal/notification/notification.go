@@ -1,10 +1,11 @@
 // Notification utilities with hoopoo-style glyph formatting
 
-package notify
+package notification
 
 import (
   "fmt"
   "os/exec"
+  "regexp"
   "strings"
 )
 
@@ -57,9 +58,28 @@ func Send(opts Options) error {
   return exec.Command("notify-send", args...).Run()
 }
 
-func Simple(title, message string) error {
-  if message != "" {
-    return exec.Command("notify-send", title, message).Run()
+func Dismiss(summary string) error {
+  cmd := exec.Command("makoctl", "list")
+  output, err := cmd.Output()
+  if err != nil {
+    return fmt.Errorf("error listing notifications: %w", err)
   }
-  return exec.Command("notify-send", title).Run()
+
+  lines := strings.Split(string(output), "\n")
+  re := regexp.MustCompile(`^Notification ([0-9]+):.*`)
+
+  for _, line := range lines {
+    if strings.Contains(line, summary) {
+      matches := re.FindStringSubmatch(line)
+      if len(matches) >= 2 {
+        notificationID := matches[1]
+        return exec.Command("makoctl", "dismiss", "-n", notificationID).Run()
+      }
+    }
+  }
+  return nil
+}
+
+func ReloadMako() error {
+  return exec.Command("makoctl", "reload").Run()
 }

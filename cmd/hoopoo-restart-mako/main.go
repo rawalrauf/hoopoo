@@ -5,12 +5,12 @@ package main
 import (
   "fmt"
   "os"
-  "os/exec"
+
+  "hoopoo.net/internal/notification"
 )
 
 func main() {
-  cmd := exec.Command("makoctl", "reload")
-  err := cmd.Run()
+  err := notification.ReloadMako()
   if err != nil {
     fmt.Fprintf(os.Stderr, "Error reloading mako: %v\n", err)
     os.Exit(1)

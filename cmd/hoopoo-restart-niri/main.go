@@ -5,12 +5,12 @@ package main
 import (
   "fmt"
   "os"
-  "os/exec"
+
+  "hoopoo.net/internal/niri"
 )
 
 func main() {
-  cmd := exec.Command("niri", "msg", "action", "load-config-file")
-  err := cmd.Run()
+  err := niri.Reload()
   if err != nil {
     fmt.Fprintf(os.Stderr, "Error reloading niri: %v\n", err)
     os.Exit(1)

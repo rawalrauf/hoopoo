@@ -6,10 +6,9 @@ package main
 import (
   "fmt"
   "os"
+  "os/exec"
 
   "hoopoo.net/internal/common/paths"
-  "hoopoo.net/internal/common/notify"
-  "hoopoo.net/internal/common/hooks"
   "hoopoo.net/internal/sysfs/battery"
 )
 
@@ -49,14 +48,16 @@ func main() {
 }
 
 func sendNotification(level int) {
-  notify.Send(notify.Options{
-    Glyph:       "󱐋",
-    Headline:    "Time to recharge!",
-    Description: fmt.Sprintf("Battery is down to %d%%", level),
-    Urgency:     "critical",
-    Icon:        "battery-caution",
-    Timeout:     30000,
-    SoundFile:   "/usr/share/sounds/freedesktop/stereo/suspend-error.oga",
-  })
-  hooks.Run("battery-low", fmt.Sprintf("%d", level))
+  cmd := exec.Command("hoopoo-notification-send",
+    "󱐋",
+    "Time to recharge!",
+    fmt.Sprintf("Battery is down to %d%%", level),
+    "-u", "critical",
+    "-i", "battery-caution",
+    "-t", "30000",
+  )
+  cmd.Run()
+  
+  hookCmd := exec.Command("hoopoo-hook", "battery-low", fmt.Sprintf("%d", level))
+  hookCmd.Run()
 }
