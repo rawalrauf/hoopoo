@@ -13,14 +13,17 @@ Hoopoo is an Arch Linux-based distribution focused on performance and user exper
 - Currently on `go` branch doing bash → Go migration
 - 282 total commands, migrating and testing one by one
 - Commands live in `bin/hoopoo-*` (bash) and `cmd/hoopoo-*/main.go` (Go)
-- Shared Go libraries in `internal/` organized by domain:
-  - `internal/battery/` - battery-related operations
-  - `internal/hw/` - hardware detection
-  - `internal/notification/` - desktop notifications (mako integration)
-  - `internal/niri/` - niri compositor operations
-  - `internal/common/hooks/` - hook execution
-  - `internal/common/paths/` - path utilities
-  - `internal/common/toggle/` - toggle state management
+- Shared Go libraries in `pkg/` with professional sub-package architecture:
+  - `pkg/notification/` - desktop notifications (mako integration)
+    - `pkg/notification/progress/` - progress bar formatting
+  - `pkg/battery/` - battery-related operations
+  - `pkg/hardware/` - hardware detection
+  - `pkg/ytdlp/` - yt-dlp download operations
+  - `pkg/media/` - video thumbnail generation
+  - `pkg/niri/` - niri compositor operations
+  - `pkg/system/paths/` - path utilities
+  - `pkg/system/toggle/` - toggle state management
+  - `pkg/system/hooks/` - hook execution
 
 **hoopoo-bash/**
 - Reference copy of bash scripts (on `dev` branch)
@@ -81,12 +84,13 @@ When porting bash commands to Go, follow this workflow:
 
 **Design the Go version:**
 
-1. Create shared library code in `internal/` packages for reusable logic
+1. Create shared library code in `pkg/` packages for reusable logic, using sub-packages for organization
 2. Keep command entry points in `cmd/hoopoo-<command>/main.go` minimal (~15-30 lines)
 3. **Package organization:**
-   - Group by infrastructure domain (`sysfs/battery/`, `sysfs/hw/`, `dbus/`, etc.)
-   - Keep cross-cutting concerns in `common/` (notify, hooks, paths)
+   - Use professional `pkg/` structure with sub-packages (e.g., `pkg/notification/progress/`)
+   - Group by domain functionality (notification, battery, hardware, media, system utilities)
    - Use short function names (`battery.IsPresent()` not `battery.BatteryIsPresent()`)
+   - Commands call each other via dispatcher: `exec.Command("hoopoo", "group", "command")`
 4. **Use goroutines where beneficial:**
    - Parallel file reads (multiple sysfs files)
    - Concurrent API calls (D-Bus, IPC)
@@ -199,10 +203,12 @@ The dispatcher (`bin/hoopoo`) reads metadata directly from source files in `cmd/
 
 ## Module Information
 
-- **Module path:** `hoopoo.net` (no `/hoopoo` suffix)
-- **Architecture:** Separate binaries per command (not dispatcher-based)
+- **Module path:** `hoopoo` (changed from `hoopoo.net`)
+- **Architecture:** Professional pkg/ structure with sub-packages for organization
+- **Command execution:** Commands call each other via dispatcher: `exec.Command("hoopoo", "notification", "send", ...)`
 - **Build:** `make all` compiles all Go commands to `bin/hoopoo-*`
 - **Binary stripping:** `-ldflags="-s -w"` for smaller binaries
+- **Future plan:** Single binary consolidation after all commands migrated
 
 ## Current Migration Status
 
@@ -210,13 +216,19 @@ The dispatcher (`bin/hoopoo`) reads metadata directly from source files in `cmd/
 - `battery-*` (3 commands: present, remaining, monitor)
 - `hw-*` (20 commands: hardware detection, GPU checks, input devices, monitor recovery)
 - `niri-toggle-*` (2 commands: enabled, disabled - for niri toggle state)
-- `notification-*` (2 commands: send, dismiss - desktop notifications)
+- `notification-*` (2 commands: send, dismiss - desktop notifications with progress bars)
 - `version-*` (3 commands: version, branch, pkgs)
 - `restart-*` (2 commands: mako, niri - reload services)
 - `sudo-reset` (1 command: reset faillock)
 - `launch-or-focus` (1 command: window management)
 
-**Total:** 34 Go commands migrated out of 282 (12.1%)
+**Completed bash-only features:**
+- `brightness-keyboard` (up/down/cycle/off/restore - with modular tracking system)
+- `kbd-track-inotify` (event-driven keyboard backlight tracker, 0% CPU idle)
+- `kbd-track-polling` (5s polling fallback for laptops without hw_changed)
+- Smart installer for keyboard backlight tracking (auto-detects hw_changed file)
+
+**Total:** 34 Go commands + keyboard brightness system migrated
 
 ## Architecture Principles
 
@@ -258,15 +270,19 @@ notification.Send(notification.Options{
   Urgency:     "critical",
   Icon:        "battery-caution",
   Timeout:     5000,
+  SoundFile:   "/usr/share/sounds/freedesktop/stereo/suspend-error.oga",
 })
 ```
+
+Progress bars use `pkg/notification/progress/Format()` with `■□` blocks.
 
 All fields are optional.
 
 **Common patterns:**
 - Use `paths.State()`, `paths.Hoopoo()`, `paths.Runtime()` for path resolution
-- Call external binaries with `exec.Command()` for cross-script compatibility
-- Use internal packages only for reusable logic within Go commands
+- Call external binaries with `exec.Command("hoopoo", "group", "command")` via dispatcher
+- Use pkg/ packages for reusable logic, organize with sub-packages when needed
+- Commands are modular and call each other, designed for eventual single-binary consolidation
 
 ## Success Criteria
 
