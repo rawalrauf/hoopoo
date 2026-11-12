@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# hoopoo:summary=Track keyboard backlight changes via polling (universal fallback).
+# hoopoo:hidden=true
+
+# This tracker polls the brightness file every 5 seconds to track changes.
+# Works on any laptop with keyboard backlight. The 5-second interval provides
+# a time buffer so lid-close firmware zeros don't register before swayidle's
+# "off" command saves the current value.
+
+# Find the keyboard backlight brightness file. Most hardware exposes it as a
+# led under /sys/class/leds; a few vendors only expose it as a backlight
+# device under /sys/class/backlight.
+brightness_file=""
+for class in leds backlight; do
+  for candidate in /sys/class/$class/*kbd_backlight*; do
+    if [[ -e $candidate ]]; then
+      brightness_file="$candidate/brightness"
+      break 2
+    fi
+  done
+done
+
+[[ -z $brightness_file ]] && exit 0
+
+state_file="${XDG_RUNTIME_DIR:-/run/user/$UID}/hoopoo/kbd-brightness-tracker"
+
+mkdir -p "$(dirname "$state_file")"
+
+# Save current brightness (no zero filtering - save all values).
+save_brightness() {
+  current="$(cat "$brightness_file")"
+  [[ -z $current ]] && return
+  echo "$current" > "$state_file"
+}
+
+# Save initial value on login.
+save_brightness
+
+# Poll loop. Polls every 5 seconds. Skips unchanged values to minimize disk writes.
+last_value="$(cat "$state_file" 2>/dev/null)"
+while sleep 5; do
+  current="$(cat "$brightness_file")"
+  [[ -z $current || $current == $last_value ]] && continue
+  last_value=$current
+  echo "$current" > "$state_file"
+done

@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# hoopoo:summary=Adjust keyboard backlight brightness using available steps.
+# hoopoo:args=<up|down|cycle|off|restore>
+
+direction="${1:-up}"
+
+# Find keyboard backlight device (look for *kbd_backlight* pattern).
+# Most hardware exposes it as a led under /sys/class/leds; a few vendors
+# only expose it as a backlight device under /sys/class/backlight.
+device=""
+for class in leds backlight; do
+  for candidate in /sys/class/$class/*kbd_backlight*; do
+    if [[ -e $candidate ]]; then
+      device="$(basename "$candidate")"
+      break 2
+    fi
+  done
+done
+
+if [[ -z $device ]]; then
+  echo "No keyboard backlight device found" >&2
+  exit 1
+fi
+
+state_file="$HOME/.local/state/hoopoo/kbd-brightness"
+tracker_file="${XDG_RUNTIME_DIR:-/run/user/$UID}/hoopoo/kbd-brightness-tracker"
+
+if [[ $direction == "off" ]]; then
+  mkdir -p "$(dirname "$state_file")"
+  # Read from tracker's runtime state (last known value, including zero)
+  if [[ -f $tracker_file ]]; then
+    tracker_value="$(cat "$tracker_file")"
+    if [[ -n $tracker_value ]]; then
+      echo "$tracker_value" > "$state_file"
+    fi
+  fi
+  brightnessctl -d "$device" set 0 >/dev/null
+  exit 0
+elif [[ $direction == "restore" ]]; then
+  # Priority: use explicit off/restore state file if it exists,
+  # otherwise fallback to tracker's runtime state.
+  if [[ -f $state_file ]]; then
+    saved="$(cat "$state_file")"
+  elif [[ -f $tracker_file ]]; then
+    saved="$(cat "$tracker_file")"
+  else
+    saved=""
+  fi
+  
+  # A saved 0 is a deliberate restore point (user pressed down/cycle to
+  # zero); apply it so the backlight stays off after wake or login.
+  if [[ -n $saved ]]; then
+    brightnessctl -d "$device" set "$saved" >/dev/null
+  fi
+  exit 0
+fi
+
+# Get current and max brightness to determine step size.
+max_brightness="$(brightnessctl -d "$device" max)"
+current_brightness="$(brightnessctl -d "$device" get)"
+
+# Calculate step as 10% of max brightness. Keyboards with many levels (e.g. 512)
+# need larger steps; keyboards with few levels (e.g. 3) fall back to step=1.
+step=$(( max_brightness / 10 ))
+(( step < 1 )) && step=1
+
+if [[ $direction == "cycle" ]]; then
+  new_brightness=$(( current_brightness + step ))
+  (( new_brightness > max_brightness )) && new_brightness=0
+elif [[ $direction == "up" ]]; then
+  new_brightness=$(( current_brightness + step ))
+  (( new_brightness > max_brightness )) && new_brightness=$max_brightness
+else
+  new_brightness=$(( current_brightness - step ))
+  (( new_brightness < 0 )) && new_brightness=0
+fi
+
+# Set the new brightness.
+brightnessctl -d "$device" set "$new_brightness" >/dev/null
+
+# Update tracker file only if inotify is running (it won't catch brightnessctl changes).
+# Polling will catch changes automatically, so skip if polling is active.
+if systemctl --user is-active --quiet kbd-track-inotify.service 2>/dev/null; then
+  mkdir -p "$(dirname "$tracker_file")"
+  echo "$new_brightness" > "$tracker_file"
+fi
+
+# Use SwayOSD to display the new brightness setting.
+percent=$((new_brightness * 100 / max_brightness))
+hoopoo-swayosd-kbd-brightness "$percent"
