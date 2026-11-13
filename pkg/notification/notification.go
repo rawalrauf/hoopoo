@@ -28,6 +28,7 @@ type Options struct {
   SoundFile   string
   Progress    int    // 0-100, generates progress bar
   ReplaceID   string // Replace existing notification
+  Actions     []string // Action buttons (e.g., "default=Open")
 }
 
 func Send(opts Options) error {
@@ -76,11 +77,16 @@ func sendWithID(opts Options) (string, error) {
     args = append(args, "-i", opts.Icon)
   }
   
+  // Add action buttons
+  for _, action := range opts.Actions {
+    args = append(args, "-A", action)
+  }
+  
   // Auto-set timeout for progress bars
   timeout := opts.Timeout
   if opts.Progress > 0 && opts.Progress <= 100 {
     if opts.Progress == 100 && timeout == 0 {
-      timeout = 3000  // 3 seconds for completion
+      timeout = 15000  // 15 seconds for 100% (allows time for post-processing)
     } else if timeout == 0 {
       timeout = 300000  // 5 minutes for in-progress
     }

@@ -5,12 +5,12 @@ package main
 import (
   "os"
 
-  "hoopoo.net/internal/common/toggle"
-  "hoopoo.net/internal/hw"
+  "hoopoo/pkg/system/toggle"
+  "hoopoo/pkg/hardware"
 )
 
 func main() {
-  if toggle.NiriEnabled("internal-monitor-off") && !hw.HasExternalMonitors() {
+  if toggle.NiriEnabled("internal-monitor-off") && !hardware.HasExternalMonitors() {
     toggle.NiriClear("internal-monitor-off")
   }
   os.Exit(0)

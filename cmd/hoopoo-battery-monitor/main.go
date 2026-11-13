@@ -8,8 +8,8 @@ import (
   "os"
   "os/exec"
 
-  "hoopoo.net/internal/common/paths"
-  "hoopoo.net/internal/battery"
+  "hoopoo/pkg/system/paths"
+  "hoopoo/pkg/battery"
 )
 
 const (
@@ -48,16 +48,14 @@ func main() {
 }
 
 func sendNotification(level int) {
-  cmd := exec.Command("hoopoo-notification-send",
-    "󱐋",
+  cmd := exec.Command("hoopoo", "notification", "send",
+    "--glyph=󱐋",
     "Time to recharge!",
     fmt.Sprintf("Battery is down to %d%%", level),
     "-u", "critical",
     "-i", "battery-caution",
     "-t", "30000",
+    "--sound=/usr/share/sounds/freedesktop/stereo/suspend-error.oga",
   )
   cmd.Run()
-  
-  hookCmd := exec.Command("hoopoo-hook", "battery-low", fmt.Sprintf("%d", level))
-  hookCmd.Run()
 }

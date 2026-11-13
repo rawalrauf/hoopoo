@@ -5,11 +5,11 @@ package main
 import (
   "os"
 
-  "hoopoo.net/internal/hw"
+  "hoopoo/pkg/hardware"
 )
 
 func main() {
-  if hw.IsLenovoThinkPad() {
+  if hardware.IsLenovoThinkPad() {
     os.Exit(0)
   }
   os.Exit(1)

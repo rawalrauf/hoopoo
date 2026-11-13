@@ -6,7 +6,7 @@ import (
   "fmt"
   "os"
 
-  "hoopoo.net/internal/battery"
+  "hoopoo/pkg/battery"
 )
 
 func main() {

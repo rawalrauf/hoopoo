@@ -7,7 +7,7 @@ import (
   "fmt"
   "os"
 
-  "hoopoo.net/internal/hw"
+  "hoopoo/pkg/hardware"
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
     os.Exit(1)
   }
 
-  if hw.MatchHardware(os.Args[1]) {
+  if hardware.MatchHardware(os.Args[1]) {
     os.Exit(0)
   }
   os.Exit(1)

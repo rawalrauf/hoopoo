@@ -19,6 +19,6 @@ func Format(percent int) string {
   filledBlocks := (percent * totalBlocks) / 100
   emptyBlocks := totalBlocks - filledBlocks
   
-  bar := strings.Repeat("■", filledBlocks) + strings.Repeat("□", emptyBlocks)
+  bar := strings.Repeat("◼", filledBlocks) + strings.Repeat("◻", emptyBlocks)
   return fmt.Sprintf("%s %d%%", bar, percent)
 }

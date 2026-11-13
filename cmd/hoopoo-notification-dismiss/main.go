@@ -7,7 +7,7 @@ import (
   "fmt"
   "os"
 
-  "hoopoo.net/internal/notification"
+  "hoopoo/pkg/notification"
 )
 
 func main() {

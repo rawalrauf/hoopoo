@@ -5,11 +5,11 @@ package main
 import (
   "os"
 
-  "hoopoo.net/internal/hw"
+  "hoopoo/pkg/hardware"
 )
 
 func main() {
-  if hw.IsDellLatitude7490() {
+  if hardware.IsDellLatitude7490() {
     os.Exit(0)
   }
   os.Exit(1)

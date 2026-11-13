@@ -5,11 +5,11 @@ package main
 import (
   "os"
 
-  "hoopoo.net/internal/hw"
+  "hoopoo/pkg/hardware"
 )
 
 func main() {
-  if hw.MatchHardware("ux5406aa") && hw.IsIntelPantherLake() {
+  if hardware.MatchHardware("ux5406aa") && hardware.IsIntelPantherLake() {
     os.Exit(0)
   }
   os.Exit(1)

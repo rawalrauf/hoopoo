@@ -4,7 +4,6 @@ package ytdlp
 
 import (
   "bufio"
-  "bytes"
   "encoding/json"
   "fmt"
   "io"
@@ -19,9 +18,7 @@ import (
 type DownloadOptions struct {
   URL         string
   DownloadDir string
-  IconPath    string
   OnProgress  func(percent int, title string)
-  OnComplete  func(filePath, title string)
 }
 
 type DownloadResult struct {
@@ -37,14 +34,12 @@ func Download(opts DownloadOptions) (*DownloadResult, error) {
   cmd := exec.Command("yt-dlp",
     "--no-playlist",
     "--no-simulate",
-    "--quiet",
-    "--no-warnings",
     "--no-exec",
     "--no-exec-before-download",
     "--progress",
     "--newline",
     "--paths", opts.DownloadDir,
-    "-o", "%(title)s.%(ext)s",
+    "-o", "%(title)s [%(id)s].%(ext)s",
     "--print", "before_dl:HOOPOO_TITLE\t%(title)j",
     "--print", "after_move:HOOPOO_FILE\t%(filepath)s",
     "--", opts.URL,
@@ -72,11 +67,19 @@ func Download(opts DownloadOptions) (*DownloadResult, error) {
   var videoTitle string
   var filePath string
   var titleUpdated bool
-  lastPercent := -1
+  var stderrOutput strings.Builder
+  lastPercent := 0
+  maxPercent := 0
   progressRegex := regexp.MustCompile(`\[download\]\s+(\d+)(?:\.\d+)?%`)
 
   for scanner.Scan() {
     line := scanner.Text()
+
+    // Capture stderr for error detection
+    if strings.Contains(line, "ERROR:") || strings.Contains(line, "WARNING:") {
+      stderrOutput.WriteString(line)
+      stderrOutput.WriteString("\n")
+    }
 
     if strings.HasPrefix(line, "HOOPOO_TITLE\t") {
       title := strings.TrimPrefix(line, "HOOPOO_TITLE\t")
@@ -97,23 +100,74 @@ func Download(opts DownloadOptions) (*DownloadResult, error) {
     }
 
     if matches := progressRegex.FindStringSubmatch(line); len(matches) > 1 {
-      if percent, err := strconv.Atoi(matches[1]); err == nil && percent != lastPercent {
-        if opts.OnProgress != nil {
-          displayTitle := videoTitle
-          if displayTitle == "" {
-            displayTitle = opts.URL
-          }
-          opts.OnProgress(percent, displayTitle)
+      if percent, err := strconv.Atoi(matches[1]); err == nil {
+        // Detect fragment reset (progress dropped significantly, like 100% -> 0%)
+        if percent < 10 && maxPercent > 80 {
+          // New fragment starting, reset tracking
+          maxPercent = 0
+          lastPercent = 0
         }
-        lastPercent = percent
+        
+        // Track max progress seen (for multi-fragment downloads)
+        if percent > maxPercent {
+          maxPercent = percent
+        }
+        
+        // Only update notification if we've made progress
+        if maxPercent > lastPercent {
+          if opts.OnProgress != nil {
+            displayTitle := videoTitle
+            if displayTitle == "" {
+              displayTitle = opts.URL
+            }
+            opts.OnProgress(maxPercent, displayTitle)
+          }
+          lastPercent = maxPercent
+        }
       }
     }
   }
 
-  cmd.Wait()
+  // Check for scanner errors
+  if err := scanner.Err(); err != nil {
+    return nil, fmt.Errorf("error reading yt-dlp output: %w", err)
+  }
 
-  if opts.OnComplete != nil {
-    opts.OnComplete(filePath, videoTitle)
+  if err := cmd.Wait(); err != nil {
+    errMsg := stderrOutput.String()
+    if errMsg == "" {
+      errMsg = err.Error()
+    }
+    
+    // Normalize for case-insensitive matching
+    errMsgLower := strings.ToLower(errMsg)
+    
+    // Classify errors
+    if strings.Contains(errMsgLower, "video unavailable") || 
+       strings.Contains(errMsgLower, "private video") || 
+       strings.Contains(errMsgLower, "not available") {
+      return nil, fmt.Errorf("video not available: %s", errMsg)
+    } else if strings.Contains(errMsgLower, "no such file") || 
+       strings.Contains(errMsgLower, "permission denied") ||
+       strings.Contains(errMsgLower, "cannot open") ||
+       strings.Contains(errMsgLower, "disk quota") ||
+       strings.Contains(errMsgLower, "no space left") {
+      return nil, fmt.Errorf("file system error: %s", errMsg)
+    } else if strings.Contains(errMsgLower, "network") || 
+       strings.Contains(errMsgLower, "timed out") || 
+       strings.Contains(errMsgLower, "unable to download") ||
+       strings.Contains(errMsgLower, "connection") ||
+       strings.Contains(errMsgLower, "failed to") ||
+       strings.Contains(errMsgLower, "http error") {
+      return nil, fmt.Errorf("network error: %s", errMsg)
+    } else {
+      return nil, fmt.Errorf("download failed: %s", errMsg)
+    }
+  }
+
+  // If no file was downloaded, return error
+  if filePath == "" {
+    return nil, fmt.Errorf("no video file downloaded")
   }
 
   return &DownloadResult{

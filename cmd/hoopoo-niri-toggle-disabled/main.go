@@ -7,7 +7,7 @@ import (
   "fmt"
   "os"
 
-  "hoopoo.net/internal/common/toggle"
+  "hoopoo/pkg/system/toggle"
 )
 
 func main() {

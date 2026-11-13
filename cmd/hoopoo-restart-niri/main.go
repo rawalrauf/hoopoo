@@ -6,7 +6,7 @@ import (
   "fmt"
   "os"
 
-  "hoopoo.net/internal/niri"
+  "hoopoo/pkg/niri"
 )
 
 func main() {

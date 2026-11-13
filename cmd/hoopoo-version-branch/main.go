@@ -8,7 +8,7 @@ import (
   "os/exec"
   "strings"
 
-  "hoopoo.net/internal/common/paths"
+  "hoopoo/pkg/system/paths"
 )
 
 func main() {

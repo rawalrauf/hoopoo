@@ -6,7 +6,7 @@ import (
   "fmt"
   "os"
 
-  "hoopoo.net/internal/common/paths"
+  "hoopoo/pkg/system/paths"
 )
 
 func main() {
