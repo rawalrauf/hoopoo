@@ -15,10 +15,14 @@ func Format(percent int) string {
     percent = 100
   }
   
-  totalBlocks := 20
+  totalBlocks := 200
   filledBlocks := (percent * totalBlocks) / 100
   emptyBlocks := totalBlocks - filledBlocks
   
-  bar := strings.Repeat("◼", filledBlocks) + strings.Repeat("◻", emptyBlocks)
+  filled := strings.Repeat("▎", filledBlocks)
+  empty := strings.Repeat("▎", emptyBlocks)
+  
+  // Use theme color for filled, medium gray for empty (works with light and dark themes)
+  bar := fmt.Sprintf("<span size='small' letter_spacing='-9500'>%s<span foreground='#888888'>%s</span></span>", filled, empty)
   return fmt.Sprintf("%s %d%%", bar, percent)
 }
