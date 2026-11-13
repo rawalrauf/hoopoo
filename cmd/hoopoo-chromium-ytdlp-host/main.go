@@ -198,8 +198,8 @@ func showCompletionNotification(filePath, title, thumbnailPath string) {
     title = ytdlp.TitleFromFile(filePath)
   }
 
-  if len(title) > 50 {
-    title = title[:50] + "…"
+  if len(title) > 45 {
+    title = title[:45] + "…"
   }
 
   // Clean up thumbnail after notification

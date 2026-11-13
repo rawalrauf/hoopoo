@@ -85,8 +85,8 @@ func Download(opts DownloadOptions) (*DownloadResult, error) {
       title := strings.TrimPrefix(line, "HOOPOO_TITLE\t")
       if decoded, err := DecodeTitle(title); err == nil && !titleUpdated {
         videoTitle = decoded
-        if len(videoTitle) > 50 {
-          videoTitle = videoTitle[:50] + "…"
+        if len(videoTitle) > 45 {
+          videoTitle = videoTitle[:45] + "…"
         }
         titleUpdated = true
       }
