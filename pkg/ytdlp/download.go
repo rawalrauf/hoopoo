@@ -34,10 +34,9 @@ func Download(opts DownloadOptions) (*DownloadResult, error) {
   cmd := exec.Command("yt-dlp",
     "--no-playlist",
     "--no-simulate",
-    "--no-exec",
-    "--no-exec-before-download",
     "--progress",
     "--newline",
+    "--format", "bestvideo[protocol^=https]+bestaudio[protocol^=https]/best[protocol^=https]/bestvideo+bestaudio/best",
     "--paths", opts.DownloadDir,
     "-o", "%(title)s [%(id)s].%(ext)s",
     "--print", "before_dl:HOOPOO_TITLE\t%(title)j",
@@ -69,7 +68,6 @@ func Download(opts DownloadOptions) (*DownloadResult, error) {
   var titleUpdated bool
   var stderrOutput strings.Builder
   lastPercent := 0
-  maxPercent := 0
   progressRegex := regexp.MustCompile(`\[download\]\s+(\d+)(?:\.\d+)?%`)
 
   for scanner.Scan() {
@@ -93,36 +91,21 @@ func Download(opts DownloadOptions) (*DownloadResult, error) {
     }
 
     if strings.HasPrefix(line, "HOOPOO_FILE\t") {
-      path := strings.TrimPrefix(line, "HOOPOO_FILE\t")
-      if resolved, err := resolveDownloadFile(path, opts.DownloadDir); err == nil {
-        filePath = resolved
-      }
+      filePath = strings.TrimPrefix(line, "HOOPOO_FILE\t")
     }
 
     if matches := progressRegex.FindStringSubmatch(line); len(matches) > 1 {
       if percent, err := strconv.Atoi(matches[1]); err == nil {
-        // Detect fragment reset (progress dropped significantly, like 100% -> 0%)
-        if percent < 10 && maxPercent > 80 {
-          // New fragment starting, reset tracking
-          maxPercent = 0
-          lastPercent = 0
-        }
-        
-        // Track max progress seen (for multi-fragment downloads)
-        if percent > maxPercent {
-          maxPercent = percent
-        }
-        
         // Only update notification if we've made progress
-        if maxPercent > lastPercent {
+        if percent > lastPercent {
           if opts.OnProgress != nil {
             displayTitle := videoTitle
             if displayTitle == "" {
               displayTitle = opts.URL
             }
-            opts.OnProgress(maxPercent, displayTitle)
+            opts.OnProgress(percent, displayTitle)
           }
-          lastPercent = maxPercent
+          lastPercent = percent
         }
       }
     }
@@ -138,31 +121,7 @@ func Download(opts DownloadOptions) (*DownloadResult, error) {
     if errMsg == "" {
       errMsg = err.Error()
     }
-    
-    // Normalize for case-insensitive matching
-    errMsgLower := strings.ToLower(errMsg)
-    
-    // Classify errors
-    if strings.Contains(errMsgLower, "video unavailable") || 
-       strings.Contains(errMsgLower, "private video") || 
-       strings.Contains(errMsgLower, "not available") {
-      return nil, fmt.Errorf("video not available: %s", errMsg)
-    } else if strings.Contains(errMsgLower, "no such file") || 
-       strings.Contains(errMsgLower, "permission denied") ||
-       strings.Contains(errMsgLower, "cannot open") ||
-       strings.Contains(errMsgLower, "disk quota") ||
-       strings.Contains(errMsgLower, "no space left") {
-      return nil, fmt.Errorf("file system error: %s", errMsg)
-    } else if strings.Contains(errMsgLower, "network") || 
-       strings.Contains(errMsgLower, "timed out") || 
-       strings.Contains(errMsgLower, "unable to download") ||
-       strings.Contains(errMsgLower, "connection") ||
-       strings.Contains(errMsgLower, "failed to") ||
-       strings.Contains(errMsgLower, "http error") {
-      return nil, fmt.Errorf("network error: %s", errMsg)
-    } else {
-      return nil, fmt.Errorf("download failed: %s", errMsg)
-    }
+    return nil, fmt.Errorf("%s", errMsg)
   }
 
   // If no file was downloaded, return error
@@ -186,56 +145,21 @@ func DecodeTitle(jsonStr string) (string, error) {
     return r < 32
   })
 
-  if title == "" || strings.HasPrefix(title, "-") {
+  if title == "" || title[0] == '-' {
     return "", fmt.Errorf("invalid title")
   }
 
   return title, nil
 }
 
-func resolveDownloadFile(candidate, downloadDir string) (string, error) {
-  if candidate == "" {
-    return "", fmt.Errorf("empty path")
-  }
-
-  if strings.ContainsAny(candidate, "\n\r\t") {
-    return "", fmt.Errorf("path contains control characters")
-  }
-
-  info, err := os.Stat(candidate)
-  if err != nil || !info.Mode().IsRegular() {
-    return "", fmt.Errorf("not a regular file")
-  }
-
-  fileReal, err := filepath.EvalSymlinks(candidate)
-  if err != nil {
-    return "", err
-  }
-
-  dirReal, err := filepath.EvalSymlinks(downloadDir)
-  if err != nil {
-    return "", err
-  }
-
-  if !strings.HasPrefix(fileReal, dirReal+string(filepath.Separator)) {
-    return "", fmt.Errorf("file outside download directory")
-  }
-
-  return fileReal, nil
-}
-
 func TitleFromFile(filePath string) string {
-  name := filepath.Base(filePath)
-  ext := filepath.Ext(name)
-  name = strings.TrimSuffix(name, ext)
+  name := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
   name = strings.Map(func(r rune) rune {
-    if r == '\n' || r == '\r' || r == '\t' {
-      return -1
-    }
+    if r < 32 { return -1 }
     return r
   }, name)
-
-  if name == "" || strings.HasPrefix(name, "-") {
+  
+  if name == "" || name[0] == '-' {
     return "Video"
   }
   return name
