@@ -201,6 +201,134 @@ Commands use `// hoopoo:` comments for metadata (both bash `#` and Go `//` style
 
 The dispatcher (`bin/hoopoo`) reads metadata directly from source files in `cmd/*/main.go` to build help and routing.
 
+## Command Format Rules
+
+**CRITICAL: All commands MUST use fully space-separated format with NO dashes in subcommands:**
+
+✅ **Correct:**
+```go
+exec.Command("hoopoo", "notification", "send", ...)
+exec.Command("hoopoo", "launch", "or", "focus", ...)
+exec.Command("hoopoo", "niri", "toggle", "disabled", ...)
+exec.Command("hoopoo", "swayosd", "kbd", "brightness", ...)
+```
+
+❌ **Wrong:**
+```go
+exec.Command("hoopoo", "notification-send", ...)           // NO dashes in subcommands
+exec.Command("hoopoo", "launch-or-focus", ...)            // NO dashes in subcommands
+exec.Command("hoopoo", "niri-toggle-disabled", ...)       // NO dashes in subcommands
+exec.Command("hoopoo", "swayosd", "kbd-brightness", ...)  // NO dashes in subcommands
+```
+
+**Why:** The bash dispatcher automatically converts spaces to dashes when finding binaries:
+- User types: `hoopoo notification send "Title"`
+- Dispatcher finds: `hoopoo-notification-send` binary
+- This prepares for single-binary migration where subcommands are naturally space-separated
+
+**Usage messages:** Always show space-separated format to match what users type:
+```go
+fmt.Fprintln(os.Stderr, "Usage: hoopoo notification send <headline> [description]")
+```
+
+**Binary names:** Keep dashes in actual binary names (`hoopoo-notification-send`) until single-binary migration.
+
+## Single Binary Migration Plan (Final Phase)
+
+**After all bash scripts are migrated and tested, consolidate into a single `hoopoo` binary.**
+
+### Architecture:
+
+**Current (multi-binary):**
+```
+bin/hoopoo-notification-send    (standalone binary, 2MB)
+bin/hoopoo-launch-or-focus      (standalone binary, 2MB)
+bin/hoopoo-brightness-keyboard  (standalone binary, 2MB)
+... (38 binaries × 2-5MB = 100-200MB total)
+```
+
+**Future (single binary):**
+```
+bin/hoopoo                      (single binary, 5-10MB)
+```
+
+### Migration Steps:
+
+1. **Rename all cmd directories** (remove `hoopoo-` prefix):
+   ```bash
+   cmd/hoopoo-notification-send/ → cmd/notification-send/
+   cmd/hoopoo-launch-or-focus/   → cmd/launch-or-focus/
+   cmd/hoopoo-brightness-keyboard/ → cmd/brightness-keyboard/
+   ```
+
+2. **Convert all commands from `main()` to `Run(args []string)`:**
+   ```go
+   // Before:
+   package main
+   func main() {
+     args := os.Args[1:]
+     // ... logic
+   }
+   
+   // After:
+   package notification_send
+   func Run(args []string) {
+     // ... same logic, use args parameter
+   }
+   ```
+
+3. **Create smart dispatcher** (`main.go` at repo root):
+   ```go
+   package main
+   
+   import (
+     "os"
+     "strings"
+     // Auto-import all cmd packages
+   )
+   
+   func main() {
+     args := os.Args[1:]
+     
+     // Auto-discover and route to commands based on directory scan
+     // Convert space-separated args to package names
+     // Call appropriate Run() function
+   }
+   ```
+
+4. **Smart dispatcher features:**
+   - Auto-discovers all packages in `cmd/` directory
+   - Converts space-separated args to command routing (e.g., `notification send` → `notification_send.Run()`)
+   - No manual route registration needed - reads from `cmd/` structure
+   - Supports multi-level commands (e.g., `niri toggle disabled` → `niri_toggle_disabled.Run()`)
+   - Parses metadata from command files for help generation
+
+5. **Build single binary:**
+   ```bash
+   go build -ldflags="-s -w" -o bin/hoopoo main.go
+   ```
+
+### Benefits:
+
+- ✅ **Size:** 5-10MB instead of 100-200MB (90-95% reduction)
+- ✅ **Speed:** No exec overhead between commands (10-100x faster for chained operations)
+- ✅ **Distribution:** Single file to deploy
+- ✅ **Maintenance:** One binary to build, test, and version
+- ✅ **Natural routing:** Space-separated commands work natively without bash dispatcher
+
+### Timeline:
+
+- **Phase 1 (current):** Migrate all bash scripts to Go, test individually
+- **Phase 2 (testing):** Verify all 282 commands work perfectly with multi-binary approach
+- **Phase 3 (consolidation):** Execute single-binary migration (1-2 hours, mostly mechanical)
+
+### Notes:
+
+- Keep bash dispatcher during migration for compatibility
+- All space-separated command format already matches single-binary architecture
+- Package names use underscores (Go requirement): `launch_or_focus`, `notification_send`
+- Directory names keep dashes for readability: `cmd/launch-or-focus/`
+
 ## Module Information
 
 - **Module path:** `hoopoo` (changed from `hoopoo.net`)
@@ -208,7 +336,6 @@ The dispatcher (`bin/hoopoo`) reads metadata directly from source files in `cmd/
 - **Command execution:** Commands call each other via dispatcher: `exec.Command("hoopoo", "notification", "send", ...)`
 - **Build:** `make all` compiles all Go commands to `bin/hoopoo-*`
 - **Binary stripping:** `-ldflags="-s -w"` for smaller binaries
-- **Future plan:** Single binary consolidation after all commands migrated
 
 ## Current Migration Status
 
