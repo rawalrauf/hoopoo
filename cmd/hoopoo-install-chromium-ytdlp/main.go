@@ -18,7 +18,7 @@ func main() {
     os.Exit(1)
   }
 
-  hostName := "com.hoopoo.ytdlp"
+  hostName := "net.hoopoo.ytdlp"
   hostPath := filepath.Join(paths.Hoopoo(), "bin", "hoopoo-chromium-ytdlp-host")
   templatePath := filepath.Join(paths.Hoopoo(), "default", "chromium", "native-messaging-hosts", hostName+".json")
 
