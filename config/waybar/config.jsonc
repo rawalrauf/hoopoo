@@ -23,6 +23,7 @@
     "custom/notification-silencing-indicator"
   ],
   "modules-right": [
+    "custom/download-indicator",
     "bluetooth",
     "network",
     "backlight",
@@ -187,6 +188,13 @@
     "exec": "$HOOPOO_PATH/default/waybar/indicators/notification-silencing.sh",
     "signal": 10,
     "return-type": "json"
+  },
+  "custom/download-indicator": {
+    "exec": "$HOOPOO_PATH/default/waybar/indicators/download.sh",
+    "on-click": "hoopoo-chromium-ytdlp-host --restore-notifications",
+    "signal": 11,
+    "return-type": "json",
+    "interval": 1
   },
   "custom/weather": {
     "exec": "$HOOPOO_PATH/default/waybar/weather.sh",

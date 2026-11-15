@@ -16,7 +16,8 @@
 #pulseaudio,
 #network,
 #bluetooth,
-#backlight {
+#backlight,
+#custom-download-indicator {
     padding: 5px 10px;
     margin: 0px 0px;
     margin-top: 2px;
