@@ -33,14 +33,6 @@ func IsAsusROG() bool {
   return dmiMatch("product_family", "ROG")
 }
 
-func IsDellLatitude7490() bool {
-  vendor, err := dmiRead("sys_vendor")
-  if err != nil || vendor != "Dell Inc." {
-    return false
-  }
-  return dmiMatch("product_name", "Latitude 7490")
-}
-
 func IsFramework16() bool {
   vendor, err := dmiRead("sys_vendor")
   if err != nil || vendor != "Framework" {
@@ -83,14 +75,6 @@ func IsIntelPantherLake() bool {
     }
   }
   return false
-}
-
-func IsLenovoThinkPad() bool {
-  vendor, err := dmiRead("sys_vendor")
-  if err != nil || vendor != "LENOVO" {
-    return false
-  }
-  return dmiMatch("product_family", "ThinkPad")
 }
 
 func MatchHardware(pattern string) bool {
