@@ -14,7 +14,7 @@ import (
 
 func main() {
   if len(os.Args) < 2 {
-    fmt.Fprintln(os.Stderr, "Usage: hoopoo-notification-send [options] <headline> [description]")
+    fmt.Fprintln(os.Stderr, "Usage: hoopoo notification send [options] <headline> [description]")
     fmt.Fprintln(os.Stderr, "Options:")
     fmt.Fprintln(os.Stderr, "  --glyph=<icon>     Icon glyph to show before headline")
     fmt.Fprintln(os.Stderr, "  -u <urgency>       Urgency level (low, normal, critical)")

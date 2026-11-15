@@ -135,7 +135,7 @@ func main() {
 	
 	// Display OSD in background (detached process)
 	percent := (newBrightness * 100) / max
-	cmd := exec.Command("hoopoo", "swayosd", "kbd-brightness", fmt.Sprintf("%d", percent))
+	cmd := exec.Command("hoopoo", "swayosd", "kbd", "brightness", fmt.Sprintf("%d", percent))
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}

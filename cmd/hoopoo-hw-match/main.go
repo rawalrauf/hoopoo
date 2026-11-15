@@ -12,7 +12,7 @@ import (
 
 func main() {
   if len(os.Args) < 2 {
-    fmt.Fprintln(os.Stderr, "Usage: hoopoo-hw-match <pattern>")
+    fmt.Fprintln(os.Stderr, "Usage: hoopoo hw match <pattern>")
     os.Exit(1)
   }
 

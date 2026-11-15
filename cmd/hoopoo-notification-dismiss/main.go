@@ -12,7 +12,7 @@ import (
 
 func main() {
   if len(os.Args) < 2 {
-    fmt.Fprintln(os.Stderr, "Usage: hoopoo-notification-dismiss <summary>")
+    fmt.Fprintln(os.Stderr, "Usage: hoopoo notification dismiss <summary>")
     os.Exit(1)
   }
 

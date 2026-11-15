@@ -17,7 +17,7 @@ type Window struct {
 
 func main() {
   if len(os.Args) < 2 {
-    fmt.Fprintln(os.Stderr, "Usage: hoopoo-launch-or-focus [app-id] [launch-command]")
+    fmt.Fprintln(os.Stderr, "Usage: hoopoo launch or focus <app-id> [launch-command]")
     os.Exit(1)
   }
 
