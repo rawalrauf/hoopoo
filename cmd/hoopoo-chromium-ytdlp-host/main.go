@@ -99,6 +99,11 @@ func downloadURL(url string) {
     notifID = ""
   }
 
+  // Track if waybar indicator is active
+  waybarIndicatorActive := false
+  progressDir := "/tmp/hoopoo-downloads"
+  progressFile := fmt.Sprintf("%s/%d", progressDir, os.Getpid())
+
   opts := ytdlp.DownloadOptions{
     URL:         url,
     DownloadDir: downloadDir,
@@ -110,14 +115,30 @@ func downloadURL(url string) {
           "--progress="+strconv.Itoa(percent),
           title,
         )
-        if err := updateCmd.Run(); err != nil {
+        err := updateCmd.Run()
+        if err != nil {
+          // Notification was dismissed - switch to waybar indicator
           notifID = ""
+          waybarIndicatorActive = true
+          os.MkdirAll(progressDir, 0755)
+          // Immediately write current progress
+          os.WriteFile(progressFile, []byte(strconv.Itoa(percent)), 0644)
+          exec.Command("pkill", "-RTMIN+11", "waybar").Run()
         }
+      } else if waybarIndicatorActive {
+        // Update waybar indicator
+        os.WriteFile(progressFile, []byte(strconv.Itoa(percent)), 0644)
       }
     },
   }
 
   result, err := ytdlp.Download(opts)
+  
+  // Clear waybar indicator
+  if waybarIndicatorActive {
+    os.Remove(progressFile)
+    exec.Command("pkill", "-RTMIN+11", "waybar").Run()
+  }
   
   // Generate thumbnail while download just completed (before dismissing progress)
   var thumbnailPath string
