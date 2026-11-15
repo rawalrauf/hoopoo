@@ -22,7 +22,7 @@ func main() {
   }
 
   appID := os.Args[1]
-  launchCommand := fmt.Sprintf("uwsm-app -- %s", appID)
+  launchCommand := appID
   if len(os.Args) > 2 {
     launchCommand = os.Args[2]
   }
