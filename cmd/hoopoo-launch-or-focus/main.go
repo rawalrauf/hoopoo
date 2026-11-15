@@ -8,6 +8,7 @@ import (
   "os"
   "os/exec"
   "fmt"
+  "syscall"
 )
 
 type Window struct {
@@ -45,6 +46,8 @@ func main() {
     }
   }
 
-  cmd = exec.Command("sh", "-c", fmt.Sprintf("exec setsid %s", launchCommand))
+  // Use shell for flexible command parsing
+  cmd = exec.Command("sh", "-c", launchCommand)
+  cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
   cmd.Start()
 }
