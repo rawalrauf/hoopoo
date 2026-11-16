@@ -7,10 +7,12 @@ import (
   "os/exec"
   "path/filepath"
   "syscall"
+
+  "hoopoo/pkg/system/paths"
 )
 
 func main() {
-  configPath := filepath.Join(os.Getenv("HOME"), ".config/swayidle/swayidle.conf")
+  configPath := filepath.Join(paths.UserConfig(), "swayidle/swayidle.conf")
   
   // Call hoopoo restart app with swayidle
   cmd := exec.Command(

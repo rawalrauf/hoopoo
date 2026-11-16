@@ -7,11 +7,13 @@ import (
   "os/exec"
   "path/filepath"
   "time"
+
+  "hoopoo/pkg/system/paths"
 )
 
 func main() {
   // Touch alacritty config to trigger reload
-  alacrittyConfig := filepath.Join(os.Getenv("HOME"), ".config/alacritty/alacritty.toml")
+  alacrittyConfig := filepath.Join(paths.UserConfig(), "alacritty/alacritty.toml")
   if _, err := os.Stat(alacrittyConfig); err == nil {
     now := time.Now()
     os.Chtimes(alacrittyConfig, now, now)

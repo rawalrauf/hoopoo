@@ -9,6 +9,8 @@ import (
   "path/filepath"
   "regexp"
   "strings"
+
+  "hoopoo/pkg/system/paths"
 )
 
 // GetDefault returns the default browser desktop file name
@@ -23,9 +25,10 @@ func GetDefault() (string, error) {
 
 // GetExecutable finds the executable path from a .desktop file
 func GetExecutable(desktopFile string) (string, error) {
+  home, _ := os.UserHomeDir()
   searchPaths := []string{
-    filepath.Join(os.Getenv("HOME"), ".local/share/applications"),
-    filepath.Join(os.Getenv("HOME"), ".nix-profile/share/applications"),
+    paths.UserApplications(),
+    filepath.Join(home, ".nix-profile/share/applications"),
     "/usr/share/applications",
   }
 
@@ -69,9 +72,10 @@ func FindChromiumBased() (string, error) {
                         "microsoft-edge", "vivaldi", "opera", "thorium-browser",
                         "ungoogled-chromium", "helium"}
 
+  home, _ := os.UserHomeDir()
   searchPaths := []string{
-    filepath.Join(os.Getenv("HOME"), ".local/share/applications"),
-    filepath.Join(os.Getenv("HOME"), ".nix-profile/share/applications"),
+    paths.UserApplications(),
+    filepath.Join(home, ".nix-profile/share/applications"),
     "/usr/share/applications",
   }
 

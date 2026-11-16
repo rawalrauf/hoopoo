@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"hoopoo/pkg/backlight/keyboard"
+	"hoopoo/pkg/system/paths"
 )
 
 func main() {
@@ -150,10 +151,7 @@ func setBrightness(device string, level int) error {
 }
 
 func isInotifyInstalled() bool {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return false
-	}
-	_, err = os.Stat(filepath.Join(homeDir, ".config/systemd/user/kbd-track-inotify.service"))
+	servicePath := filepath.Join(paths.UserConfig(), "systemd/user/kbd-track-inotify.service")
+	_, err := os.Stat(servicePath)
 	return err == nil
 }

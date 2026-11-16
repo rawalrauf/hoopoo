@@ -12,29 +12,24 @@ import (
 )
 
 func main() {
-  home, err := os.UserHomeDir()
-  if err != nil {
-    fmt.Fprintf(os.Stderr, "Error getting home directory: %v\n", err)
-    os.Exit(1)
-  }
-
   hostName := "net.hoopoo.ytdlp"
   hostPath := filepath.Join(paths.Hoopoo(), "bin", "hoopoo-chromium-ytdlp-host")
   templatePath := filepath.Join(paths.Hoopoo(), "default", "chromium", "native-messaging-hosts", hostName+".json")
 
+  userConfig := paths.UserConfig()
   browserDirs := []string{
-    filepath.Join(home, ".config", "chromium"),
-    filepath.Join(home, ".config", "google-chrome"),
-    filepath.Join(home, ".config", "google-chrome-beta"),
-    filepath.Join(home, ".config", "google-chrome-unstable"),
-    filepath.Join(home, ".config", "BraveSoftware", "Brave-Browser"),
-    filepath.Join(home, ".config", "BraveSoftware", "Brave-Browser-Beta"),
-    filepath.Join(home, ".config", "BraveSoftware", "Brave-Browser-Nightly"),
-    filepath.Join(home, ".config", "BraveSoftware", "Brave-Origin"),
-    filepath.Join(home, ".config", "BraveSoftware", "Brave-Origin-Beta"),
-    filepath.Join(home, ".config", "BraveSoftware", "Brave-Origin-Nightly"),
-    filepath.Join(home, ".config", "microsoft-edge"),
-    filepath.Join(home, ".config", "microsoft-edge-dev"),
+    filepath.Join(userConfig, "chromium"),
+    filepath.Join(userConfig, "google-chrome"),
+    filepath.Join(userConfig, "google-chrome-beta"),
+    filepath.Join(userConfig, "google-chrome-unstable"),
+    filepath.Join(userConfig, "BraveSoftware", "Brave-Browser"),
+    filepath.Join(userConfig, "BraveSoftware", "Brave-Browser-Beta"),
+    filepath.Join(userConfig, "BraveSoftware", "Brave-Browser-Nightly"),
+    filepath.Join(userConfig, "BraveSoftware", "Brave-Origin"),
+    filepath.Join(userConfig, "BraveSoftware", "Brave-Origin-Beta"),
+    filepath.Join(userConfig, "BraveSoftware", "Brave-Origin-Nightly"),
+    filepath.Join(userConfig, "microsoft-edge"),
+    filepath.Join(userConfig, "microsoft-edge-dev"),
   }
 
   templateContent, err := os.ReadFile(templatePath)
