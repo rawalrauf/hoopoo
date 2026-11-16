@@ -4,21 +4,23 @@ package main
 
 import (
   "os/exec"
+
+  "hoopoo/pkg/system/systemd"
 )
 
 func main() {
   // Daemon reload
-  exec.Command("systemctl", "--user", "daemon-reload").Run()
+  systemd.DaemonReload()
   
   // Stop service (ignore errors)
-  exec.Command("systemctl", "--user", "stop", "swayosd-server.service").Run()
+  systemd.Stop("swayosd-server.service")
   
   // Kill any remaining processes
   exec.Command("pkill", "-x", "swayosd-server").Run()
   
   // Reset failed state
-  exec.Command("systemctl", "--user", "reset-failed", "swayosd-server.service").Run()
+  systemd.ResetFailed("swayosd-server.service")
   
   // Enable and start service
-  exec.Command("systemctl", "--user", "enable", "--now", "swayosd-server.service").Run()
+  systemd.EnableNow("swayosd-server.service")
 }

@@ -8,17 +8,19 @@ import (
   "os/exec"
   "os/user"
   "path/filepath"
+
+  "hoopoo/pkg/system/systemd"
 )
 
 func restartServices() {
   // Restart elephant if enabled
-  if exec.Command("systemctl", "--user", "is-enabled", "elephant.service").Run() == nil {
-    exec.Command("systemctl", "--user", "restart", "elephant.service").Run()
+  if systemd.IsEnabled("elephant.service") {
+    systemd.Restart("elephant.service")
   }
 
   // Restart walker if enabled
-  if exec.Command("systemctl", "--user", "is-enabled", "app-walker@autostart.service").Run() == nil {
-    exec.Command("systemctl", "--user", "restart", "app-walker@autostart.service").Run()
+  if systemd.IsEnabled("app-walker@autostart.service") {
+    systemd.Restart("app-walker@autostart.service")
   } else {
     fmt.Println("\033[31mUnable to restart Walker -- RESTART MANUALLY\033[0m")
   }
