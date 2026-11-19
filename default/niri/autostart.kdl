@@ -21,11 +21,8 @@ spawn-sh-at-startup "hoopoo-powerprofiles-init"
 // First boot setup (runs once, deletes its own marker after)
 spawn-sh-at-startup "hoopoo-first-run"
 
-// Monitor event watcher for recover on disconnect
-spawn-sh-at-startup "uwsm app -- hoopoo-niri-monitor-watch"
-
-// Watch niri window focus to hide active window title in waybar when focus is lost
-spawn-sh-at-startup "uwsm app -- hoopoo-waybar-window-title-watch"
+// Niri event stream dispatcher (handles monitor recovery and waybar title)
+spawn-sh-at-startup "hoopoo-niri-event-stream &"
 
 // Pre-warm keybindings cache so first open is instant
 spawn-sh-at-startup "sleep 3 && hoopoo-menu-keybindings --print > /dev/null 2>&1 &"

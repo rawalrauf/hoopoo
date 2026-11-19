@@ -1,3 +1,5 @@
+github.com/calico32/kdl-go v0.16.0 h1:13g9xH7AfFgcspfFOPxZbOyiDXKDBwgRFQ59U5mK3Io=
+github.com/calico32/kdl-go v0.16.0/go.mod h1:4ce3MlmBOEJ9eTbPVzPifQf0sgRs+d/m52UF3MyK8+c=
 github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx59Ho=
 github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
 golang.org/x/sys v0.13.0 h1:Af8nKPmuFypiUBjVoU9V20FiaFXOcuZI21p0ycVYYGE=
