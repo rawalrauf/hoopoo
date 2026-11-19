@@ -7,7 +7,7 @@ import (
   "fmt"
   "os"
 
-  "hoopoo/pkg/system/toggle"
+  "hoopoo/pkg/niri"
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
     os.Exit(1)
   }
 
-  if toggle.NiriEnabled(os.Args[1]) {
+  if niri.StateEnabled(os.Args[1]) {
     os.Exit(0)
   }
   os.Exit(1)
