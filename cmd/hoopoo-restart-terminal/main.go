@@ -9,6 +9,7 @@ import (
   "time"
 
   "hoopoo/pkg/system/paths"
+  "hoopoo/pkg/system/process"
 )
 
 func main() {
@@ -20,12 +21,12 @@ func main() {
   }
 
   // Reload kitty if running
-  if exec.Command("pgrep", "-x", "kitty").Run() == nil {
+  if process.IsRunning("kitty") {
     exec.Command("killall", "-SIGUSR1", "kitty").Run()
   }
 
   // Reload ghostty if running
-  if exec.Command("pgrep", "-x", "ghostty").Run() == nil {
+  if process.IsRunning("ghostty") {
     exec.Command("killall", "-SIGUSR2", "ghostty").Run()
   }
 }

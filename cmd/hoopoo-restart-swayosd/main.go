@@ -3,8 +3,7 @@
 package main
 
 import (
-  "os/exec"
-
+  "hoopoo/pkg/system/process"
   "hoopoo/pkg/system/systemd"
 )
 
@@ -16,7 +15,7 @@ func main() {
   systemd.Stop("swayosd-server.service")
   
   // Kill any remaining processes
-  exec.Command("pkill", "-x", "swayosd-server").Run()
+  process.Kill("swayosd-server")
   
   // Reset failed state
   systemd.ResetFailed("swayosd-server.service")

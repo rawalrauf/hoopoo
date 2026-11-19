@@ -4,11 +4,13 @@ package main
 
 import (
   "os/exec"
+
+  "hoopoo/pkg/system/process"
 )
 
 func main() {
   // Check if opencode is running
-  if exec.Command("pgrep", "-x", "opencode").Run() == nil {
+  if process.IsRunning("opencode") {
     // Send SIGUSR2 to reload config
     exec.Command("killall", "-SIGUSR2", "opencode").Run()
   }

@@ -4,17 +4,13 @@
 package main
 
 import (
-  "encoding/json"
   "os"
   "os/exec"
   "fmt"
   "syscall"
-)
 
-type Window struct {
-  ID    int    `json:"id"`
-  AppID string `json:"app_id"`
-}
+  "hoopoo/pkg/niri"
+)
 
 func main() {
   if len(os.Args) < 2 {
@@ -28,26 +24,18 @@ func main() {
     launchCommand = os.Args[2]
   }
 
-  cmd := exec.Command("niri", "msg", "-j", "windows")
-  output, err := cmd.Output()
-  if err != nil {
-    os.Exit(1)
-  }
-
-  var windows []Window
-  if err := json.Unmarshal(output, &windows); err != nil {
-    os.Exit(1)
-  }
-
-  for _, win := range windows {
-    if win.AppID == appID {
-      exec.Command("niri", "msg", "action", "focus-window", "--id", fmt.Sprintf("%d", win.ID)).Run()
-      return
+  windows, err := niri.GetWindows()
+  if err == nil {
+    for _, win := range windows {
+      if win.AppID == appID {
+        niri.FocusWindow(win.ID)
+        return
+      }
     }
   }
 
   // Use shell for flexible command parsing
-  cmd = exec.Command("sh", "-c", launchCommand)
+  cmd := exec.Command("sh", "-c", launchCommand)
   cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
   cmd.Start()
 }

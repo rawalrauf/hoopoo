@@ -4,7 +4,6 @@
 package main
 
 import (
-  "encoding/json"
   "fmt"
   "os"
   "os/exec"
@@ -13,12 +12,8 @@ import (
   "syscall"
 
   "hoopoo/pkg/browser"
+  "hoopoo/pkg/niri"
 )
-
-type Window struct {
-  ID    int    `json:"id"`
-  AppID string `json:"app_id"`
-}
 
 func main() {
   if len(os.Args) < 2 {
@@ -32,20 +27,15 @@ func main() {
   cleanDomain := browser.ExtractDomain(url)
 
   // Check if window for this domain is already running
-  cmd := exec.Command("niri", "msg", "-j", "windows")
-  output, err := cmd.Output()
-
   var runningAppID string
+  windows, err := niri.GetWindows()
   if err == nil {
-    var windows []Window
-    if json.Unmarshal(output, &windows) == nil {
-      // Match pattern: *-<domain>__-Default
-      pattern := regexp.MustCompile(fmt.Sprintf(`^.*-%s__-Default$`, regexp.QuoteMeta(cleanDomain)))
-      for _, win := range windows {
-        if pattern.MatchString(win.AppID) {
-          runningAppID = win.AppID
-          break
-        }
+    // Match pattern: *-<domain>__-Default
+    pattern := regexp.MustCompile(fmt.Sprintf(`^.*-%s__-Default$`, regexp.QuoteMeta(cleanDomain)))
+    for _, win := range windows {
+      if pattern.MatchString(win.AppID) {
+        runningAppID = win.AppID
+        break
       }
     }
   }

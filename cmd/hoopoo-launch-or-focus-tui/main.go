@@ -4,7 +4,6 @@
 package main
 
 import (
-  "encoding/json"
   "fmt"
   "os"
   "os/exec"
@@ -12,12 +11,9 @@ import (
   "regexp"
   "strings"
   "syscall"
-)
 
-type Window struct {
-  ID    int    `json:"id"`
-  AppID string `json:"app_id"`
-}
+  "hoopoo/pkg/niri"
+)
 
 func main() {
   if len(os.Args) < 2 {
@@ -51,19 +47,14 @@ func main() {
   cmdName := filepath.Base(args[0])
 
   // Query Niri for running window matching org.hoopoo.<CMD_NAME>, org.hoopoo.float.<CMD_NAME>, or org.hoopoo.tile.<CMD_NAME>
-  cmd := exec.Command("niri", "msg", "-j", "windows")
-  output, err := cmd.Output()
-  
   var runningID string
+  windows, err := niri.GetWindows()
   if err == nil {
-    var windows []Window
-    if json.Unmarshal(output, &windows) == nil {
-      pattern := regexp.MustCompile(fmt.Sprintf(`^org\.hoopoo\.(float\.|tile\.)?%s$`, regexp.QuoteMeta(cmdName)))
-      for _, win := range windows {
-        if pattern.MatchString(win.AppID) {
-          runningID = win.AppID
-          break
-        }
+    pattern := regexp.MustCompile(fmt.Sprintf(`^org\.hoopoo\.(float\.|tile\.)?%s$`, regexp.QuoteMeta(cmdName)))
+    for _, win := range windows {
+      if pattern.MatchString(win.AppID) {
+        runningID = win.AppID
+        break
       }
     }
   }
@@ -112,3 +103,4 @@ func main() {
   
   finalCmd.Run()
 }
+

@@ -7,11 +7,12 @@ import (
   "path/filepath"
 
   "hoopoo/pkg/system/paths"
+  "hoopoo/pkg/system/process"
 )
 
 func main() {
   // Check if tmux is running
-  if exec.Command("pgrep", "-x", "tmux").Run() == nil {
+  if process.IsRunning("tmux") {
     configPath := filepath.Join(paths.UserConfig(), "tmux/tmux.conf")
     exec.Command("tmux", "source-file", configPath).Run()
   }

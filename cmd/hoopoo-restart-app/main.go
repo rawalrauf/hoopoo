@@ -8,6 +8,8 @@ import (
   "os"
   "os/exec"
   "syscall"
+
+  "hoopoo/pkg/system/process"
 )
 
 func main() {
@@ -19,7 +21,7 @@ func main() {
   appName := os.Args[1]
 
   // Kill existing instances
-  exec.Command("pkill", "-x", appName).Run()
+  process.Kill(appName)
 
   // Relaunch application
   cmd := exec.Command(os.Args[1], os.Args[2:]...)

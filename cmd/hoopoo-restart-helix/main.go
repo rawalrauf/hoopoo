@@ -4,11 +4,13 @@ package main
 
 import (
   "os/exec"
+
+  "hoopoo/pkg/system/process"
 )
 
 func main() {
   // Check if helix is running
-  if exec.Command("pgrep", "-x", "helix").Run() == nil {
+  if process.IsRunning("helix") {
     // Send SIGUSR1 to reload config
     exec.Command("pkill", "-USR1", "helix").Run()
   }

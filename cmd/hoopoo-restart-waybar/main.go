@@ -6,11 +6,13 @@ package main
 import (
   "os/exec"
   "syscall"
+
+  "hoopoo/pkg/system/process"
 )
 
 func main() {
   // Kill waybar with SIGKILL
-  exec.Command("pkill", "-9", "-x", "waybar").Run()
+  process.KillForce("waybar")
 
   // Relaunch waybar
   cmd := exec.Command("waybar")
