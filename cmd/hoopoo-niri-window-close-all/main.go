@@ -3,32 +3,21 @@
 package main
 
 import (
-  "encoding/json"
-  "os/exec"
-  "strconv"
+  "hoopoo/pkg/niri"
 )
-
-type Window struct {
-  ID int `json:"id"`
-}
 
 func main() {
   // Switch to workspace 1
-  exec.Command("niri", "msg", "action", "focus-workspace", "1").Run()
+  niri.FocusWorkspace(1)
 
   // Get window list
-  out, err := exec.Command("niri", "msg", "-j", "windows").Output()
+  windows, err := niri.GetWindows()
   if err != nil {
-    return
-  }
-
-  var windows []Window
-  if json.Unmarshal(out, &windows) != nil {
     return
   }
 
   // Close each window
   for _, w := range windows {
-    exec.Command("niri", "msg", "action", "close-window", "--id", strconv.Itoa(w.ID)).Run()
+    niri.CloseWindow(w.ID)
   }
 }
