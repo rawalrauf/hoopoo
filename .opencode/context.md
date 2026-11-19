@@ -20,10 +20,12 @@ Hoopoo is an Arch Linux-based distribution focused on performance and user exper
   - `pkg/hardware/` - hardware detection
   - `pkg/ytdlp/` - yt-dlp download operations
   - `pkg/media/` - video thumbnail generation
-  - `pkg/niri/` - niri compositor operations
+  - `pkg/niri/` - niri compositor operations (GetWindows, GetInternalDisplay, FocusWindow, EventStream, etc.)
+  - `pkg/toggle/` - generic toggle state management (Enabled, Disabled, Clear, Write)
   - `pkg/system/paths/` - path utilities
-  - `pkg/system/toggle/` - toggle state management
+  - `pkg/system/process/` - process management (IsRunning, Kill, KillForce)
   - `pkg/system/hooks/` - hook execution
+  - `pkg/system/systemd/` - systemd service management
 
 **hoopoo-bash/**
 - Reference copy of bash scripts (on `dev` branch)
@@ -341,21 +343,17 @@ bin/hoopoo                      (single binary, 5-10MB)
 
 **Completed command groups:**
 - `battery-*` (3 commands: present, remaining, monitor)
-- `hw-*` (20 commands: hardware detection, GPU checks, input devices, monitor recovery)
-- `niri-toggle-*` (2 commands: enabled, disabled - for niri toggle state)
+- `hw-*` (21 commands: hardware detection, GPU checks, input devices, monitor recovery, cleanup)
+- `niri-*` (11 commands: monitor control, window management, toggle utilities)
+- `toggle-*` (5 commands: touchpad, touchscreen, generic toggle utilities)
 - `notification-*` (2 commands: send, dismiss - desktop notifications with progress bars)
 - `version-*` (3 commands: version, branch, pkgs)
-- `restart-*` (2 commands: mako, niri - reload services)
+- `restart-*` (17 commands: mako, niri, waybar, swayosd, etc.)
+- `refresh-*` (14 commands: config file refresh utilities)
+- `launch-*` (14 commands: application launchers with focus logic)
 - `sudo-reset` (1 command: reset faillock)
-- `launch-or-focus` (1 command: window management)
 
-**Completed bash-only features:**
-- `brightness-keyboard` (up/down/cycle/off/restore - with modular tracking system)
-- `kbd-track-inotify` (event-driven keyboard backlight tracker, 0% CPU idle)
-- `kbd-track-polling` (5s polling fallback for laptops without hw_changed)
-- Smart installer for keyboard backlight tracking (auto-detects hw_changed file)
-
-**Total:** 34 Go commands + keyboard brightness system migrated
+**Total:** 93 Go commands migrated
 
 ## Architecture Principles
 
@@ -365,10 +363,14 @@ bin/hoopoo                      (single binary, 5-10MB)
 - Internal packages provide reusable functionality
 - Clean separation between infrastructure and domain logic
 
-**Binary vs Function usage:**
-- Commands that need cross-script compatibility: create binaries (notification-send)
-- Commands calling other commands: use binaries (battery-monitor calls notification-send)
-- Internal reusable logic: use packages (toggle, paths, hooks)
+**Binary vs Package usage:**
+- **Use binaries** for inter-command communication (hoopoo notification send, hoopoo niri toggle enabled)
+- **Use packages directly** for:
+  - System infrastructure (paths, toggle, process)
+  - Complex operations with no binary equivalent (niri.GetWindows, niri.EventStream)
+  - Writing state files (niri.WriteState, toggle.Write)
+- **Rule:** If a binary exists and provides the functionality, prefer using it over pkg functions
+- **Exception:** Low-level operations (GetInternalDisplay, GetWindows, process checks) use pkg directly
 
 ## Code Style
 
@@ -379,14 +381,27 @@ bin/hoopoo                      (single binary, 5-10MB)
 - Minimal comments in cmd files (just metadata)
 - No "Get" prefixes (`Level()` not `GetLevel()`)
 
-**Toggle API (follows bash command naming):**
+**Toggle API (generic package for all toggle operations):**
 ```go
-// Generic toggles (root level) - matches hoopoo-toggle-enabled
-toggle.HoopooEnabled("waybar-off")       → toggles/waybar-off
+// Generic toggles (works with any path relative to toggles/)
+toggle.Enabled("waybar-off")                    → ~/.local/state/hoopoo/toggles/waybar-off
+toggle.Enabled("niri/gaps-enabled.kdl")         → ~/.local/state/hoopoo/toggles/niri/gaps-enabled.kdl
+toggle.Disabled("waybar-off")                   → inverse of Enabled
+toggle.Clear("waybar-off")                      → removes toggle file
+toggle.Write("waybar-off", "content")           → writes toggle file
 
-// Niri toggles (subdirectory) - matches hoopoo-niri-toggle-enabled  
-toggle.NiriEnabled("internal-monitor-off") → toggles/niri/internal-monitor-off.kdl
+// Niri wrappers (convenience functions for niri toggles)
+niri.StateEnabled("gaps-enabled.kdl")           → toggle.Enabled("niri/gaps-enabled.kdl")
+niri.StateDisabled("gaps-enabled.kdl")          → toggle.Disabled("niri/gaps-enabled.kdl")
+niri.ClearState("gaps-enabled.kdl")             → toggle.Clear("niri/gaps-enabled.kdl")
+niri.WriteState("gaps-enabled.kdl", "content")  → toggle.Write("niri/gaps-enabled.kdl", "content")
 ```
+
+**Architecture principle:**
+- `pkg/toggle/` is generic infrastructure (system-level)
+- `pkg/niri/` wraps toggle for niri-specific convenience
+- Commands use niri wrappers when working with niri toggles
+- Commands use toggle directly for non-niri toggles
 
 **Notification API:**
 ```go
