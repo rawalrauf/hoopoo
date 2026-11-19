@@ -21,8 +21,11 @@ Hoopoo is an Arch Linux-based distribution focused on performance and user exper
   - `pkg/ytdlp/` - yt-dlp download operations
   - `pkg/media/` - video thumbnail generation
   - `pkg/niri/` - niri compositor operations (GetWindows, GetInternalDisplay, FocusWindow, EventStream, etc.)
+    - `pkg/niri/config/` - KDL config editor with comment preservation
   - `pkg/toggle/` - generic toggle state management (Enabled, Disabled, Clear, Write)
-  - `pkg/system/paths/` - path utilities
+  - `pkg/font/` - font detection and management (state file-based)
+  - `pkg/walker/` - font-aware walker dimensions and launcher utilities
+  - `pkg/system/paths/` - path utilities (UserConfig, State, Hoopoo, etc.)
   - `pkg/system/process/` - process management (IsRunning, Kill, KillForce)
   - `pkg/system/hooks/` - hook execution
   - `pkg/system/systemd/` - systemd service management
@@ -344,16 +347,18 @@ bin/hoopoo                      (single binary, 5-10MB)
 **Completed command groups:**
 - `battery-*` (3 commands: present, remaining, monitor)
 - `hw-*` (21 commands: hardware detection, GPU checks, input devices, monitor recovery, cleanup)
-- `niri-*` (11 commands: monitor control, window management, toggle utilities)
+- `niri-*` (15 commands: monitor control, window management, toggle utilities, event stream)
 - `toggle-*` (5 commands: touchpad, touchscreen, generic toggle utilities)
 - `notification-*` (2 commands: send, dismiss - desktop notifications with progress bars)
 - `version-*` (3 commands: version, branch, pkgs)
 - `restart-*` (17 commands: mako, niri, waybar, swayosd, etc.)
 - `refresh-*` (14 commands: config file refresh utilities)
-- `launch-*` (14 commands: application launchers with focus logic)
+- `launch-*` (15 commands: application launchers with focus logic, walker integration)
+- `font-*` (3 commands: current, list, set - state file-based font management)
+- `menu-*` (2 commands: keybindings, tmux-keybindings - interactive search menus)
 - `sudo-reset` (1 command: reset faillock)
 
-**Total:** 93 Go commands migrated
+**Total:** 101 Go commands migrated
 
 ## Architecture Principles
 
@@ -363,14 +368,37 @@ bin/hoopoo                      (single binary, 5-10MB)
 - Internal packages provide reusable functionality
 - Clean separation between infrastructure and domain logic
 
-**Binary vs Package usage:**
-- **Use binaries** for inter-command communication (hoopoo notification send, hoopoo niri toggle enabled)
-- **Use packages directly** for:
-  - System infrastructure (paths, toggle, process)
+**Binary vs Package usage (CRITICAL):**
+- **NEVER call hoopoo binaries from pkg/** - pkg/ is pure logic only
+- **In cmd/, prefer binaries over pkg when available:**
+  - Use `exec.Command("hoopoo", "notification", "send", ...)` instead of `notification.Send()`
+  - Use `exec.Command("hoopoo", "restart", "waybar")` instead of direct systemd calls
+  - Exception: When pkg provides the ONLY interface (e.g., `niri.GetWindows()`, `font.Current()`)
+- **Use packages directly for:**
+  - System infrastructure (paths, toggle, process, hooks)
   - Complex operations with no binary equivalent (niri.GetWindows, niri.EventStream)
-  - Writing state files (niri.WriteState, toggle.Write)
-- **Rule:** If a binary exists and provides the functionality, prefer using it over pkg functions
-- **Exception:** Low-level operations (GetInternalDisplay, GetWindows, process checks) use pkg directly
+  - State file operations (toggle.Write, font.StateFile)
+  - Reading configuration (font.Current, walker dimensions)
+- **Rule:** pkg/ should only call system tools (fc-list, niri msg, notify-send), never hoopoo binaries
+- **Exception:** Low-level operations that form the foundation for binaries use pkg directly
+
+**Examples of correct usage:**
+```go
+// ✅ CORRECT in cmd/
+exec.Command("hoopoo", "notification", "send", "Title").Run()
+exec.Command("hoopoo", "restart", "waybar").Run()
+fontName := font.Current() // No binary equivalent, pkg is source
+dims := walker.Get() // Reading config, not executing action
+
+// ✅ CORRECT in pkg/
+exec.Command("fc-list", ":spacing=100").Output() // System tool
+exec.Command("niri", "msg", "action", "quit").Run() // System tool
+exec.Command("notify-send", "Title").Run() // System tool
+
+// ❌ WRONG in pkg/
+exec.Command("hoopoo", "restart", "waybar").Run() // Never call hoopoo from pkg
+exec.Command("hoopoo", "notification", "send").Run() // Never call hoopoo from pkg
+```
 
 ## Code Style
 
