@@ -1,6 +1,7 @@
 binds {
     Mod+O repeat=false hotkey-overlay-title="Toggle Overview" { toggle-overview; }
     Mod+Q repeat=false hotkey-overlay-title="Close Window" { close-window; }
+    Mod+Alt+Ctrl+Delete repeat=false hotkey-overlay-title="Close All Windows" { spawn-sh "hoopoo niri window close all &"; }
 
     Mod+Left  hotkey-overlay-title="Focus Column Left" { focus-column-left; }
     Mod+Down  hotkey-overlay-title="Focus Window Down" { focus-window-down; }
