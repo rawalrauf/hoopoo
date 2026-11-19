@@ -12,7 +12,6 @@
         <style>
           <class name="box-wrapper"></class>
         </style>
-        <property name="width-request">644</property>
         <property name="overflow">hidden</property>
         <property name="orientation">horizontal</property>
         <property name="valign">center</property>
@@ -92,6 +91,7 @@
                     <property name="propagate-natural-width">true</property>
                     <property name="hscrollbar-policy">automatic</property>
                     <property name="vscrollbar-policy">automatic</property>
+
                     <child>
                       <object class="GtkGridView" id="List">
                         <style>
