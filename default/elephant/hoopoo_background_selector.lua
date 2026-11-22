@@ -58,7 +58,7 @@ function GetEntries()
             Text = FormatName(filename),
             Value = background,
             Actions = {
-              activate = "hoopoo-theme-bg-set " .. ShellEscape(background),
+              activate = "hoopoo theme bg set " .. ShellEscape(background),
             },
             Preview = background,
             PreviewType = "file",

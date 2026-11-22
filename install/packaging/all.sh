@@ -7,5 +7,4 @@ run_logged $HOOPOO_INSTALL/packaging/tuis.sh
 run_logged $HOOPOO_INSTALL/packaging/npx.sh
 run_logged $HOOPOO_INSTALL/packaging/asus-rog.sh
 run_logged $HOOPOO_INSTALL/packaging/framework16.sh
-run_logged $HOOPOO_INSTALL/packaging/dell-xps-touchpad-haptics.sh
 run_logged $HOOPOO_INSTALL/packaging/surface.sh

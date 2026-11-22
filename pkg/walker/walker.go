@@ -23,7 +23,7 @@ func EnsureServices() {
   }()
 
   go func() {
-    if exec.Command("pgrep", "-f", "walker --gapplication-service").Run() != nil {
+    if !process.IsRunningByPattern("walker --gapplication-service") {
       cmd := exec.Command("walker", "--gapplication-service")
       cmd.Env = append(os.Environ(), "GSK_RENDERER=cairo")
       cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}

@@ -16,8 +16,9 @@ import (
   "syscall"
 
   "hoopoo/pkg/system/paths"
+  "hoopoo/pkg/system/process"
   "hoopoo/pkg/ytdlp"
-  "hoopoo/pkg/media"
+  "hoopoo/pkg/media/video"
 )
 
 type nativeMessage struct {
@@ -156,7 +157,7 @@ func downloadURL(url string) {
           })
           os.WriteFile(restoreFile, restoreJSON, 0644)
           
-          exec.Command("pkill", "-RTMIN+11", "waybar").Run()
+          process.SendSignal("RTMIN+11", "waybar")
         }
       } else if waybarIndicatorActive {
         // Update waybar indicator and restore data
@@ -187,7 +188,7 @@ func downloadURL(url string) {
   // Generate thumbnail while download just completed (before dismissing progress)
   var thumbnailPath string
   if err == nil && result != nil && result.FilePath != "" {
-    thumbnailPath, _ = media.GenerateVideoThumbnail(result.FilePath)
+    thumbnailPath, _ = video.GenerateVideoThumbnail(result.FilePath)
   }
   
   // Dismiss progress notification

@@ -60,8 +60,8 @@ function GetEntries()
             Preview = preview_path,
             PreviewType = "file",
             Actions = {
-              activate = "hoopoo-launch-floating-terminal-with-presentation "
-                .. shell_escape("hoopoo-plymouth-set-by-theme " .. shell_escape(theme_name)),
+              activate = "hoopoo launch floating terminal with presentation "
+                .. shell_escape("hoopoo plymouth set by theme " .. shell_escape(theme_name)),
             },
           })
         end
@@ -78,8 +78,8 @@ function GetEntries()
   local default_entry = {
     Text = "Default  ",
     Actions = {
-      activate = "hoopoo-launch-floating-terminal-with-presentation "
-        .. shell_escape("hoopoo-plymouth-reset"),
+      activate = "hoopoo launch floating terminal with presentation "
+        .. shell_escape("hoopoo plymouth reset"),
     },
   }
   if file_exists(default_preview) then

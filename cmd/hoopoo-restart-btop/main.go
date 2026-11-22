@@ -3,10 +3,10 @@
 package main
 
 import (
-  "os/exec"
+  "hoopoo/pkg/system/process"
 )
 
 func main() {
   // Send SIGUSR2 to btop to reload config
-  exec.Command("pkill", "-SIGUSR2", "btop").Run()
+  process.SendSignal("SIGUSR2", "btop")
 }

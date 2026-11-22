@@ -4,115 +4,52 @@ package hardware
 
 import (
   "os"
-  "os/exec"
   "path/filepath"
   "strings"
+  
+  "hoopoo/pkg/hardware/cpu"
+  "hoopoo/pkg/hardware/dmi"
+  "hoopoo/pkg/hardware/gpu"
+  "hoopoo/pkg/hardware/input"
 )
 
-func dmiRead(file string) (string, error) {
-  data, err := os.ReadFile(filepath.Join("/sys/class/dmi/id", file))
-  if err != nil {
-    return "", err
-  }
-  return strings.TrimSpace(string(data)), nil
-}
+// System-specific hardware detection
 
-func dmiMatch(file, pattern string) bool {
-  content, err := dmiRead(file)
-  if err != nil {
-    return false
-  }
-  return strings.Contains(strings.ToLower(content), strings.ToLower(pattern))
-}
-
+// IsAsusROG checks if the system is an ASUS ROG laptop
 func IsAsusROG() bool {
-  vendor, err := dmiRead("sys_vendor")
+  vendor, err := dmi.Vendor()
   if err != nil || vendor != "ASUSTeK COMPUTER INC." {
     return false
   }
-  return dmiMatch("product_family", "ROG")
+  return dmi.Match("product_family", "ROG")
 }
 
+// IsFramework16 checks if the system is a Framework 16 laptop
 func IsFramework16() bool {
-  vendor, err := dmiRead("sys_vendor")
+  vendor, err := dmi.Vendor()
   if err != nil || vendor != "Framework" {
     return false
   }
-  return dmiMatch("product_name", "Laptop 16") || dmiMatch("product_family", "Laptop 16")
+  return dmi.Match("product_name", "Laptop 16") || dmi.Match("product_family", "Laptop 16")
 }
 
-func IsIntelCPU() bool {
-  data, err := os.ReadFile("/proc/cpuinfo")
-  if err != nil {
-    return false
-  }
-  
-  for _, line := range strings.Split(string(data), "\n") {
-    if strings.HasPrefix(line, "vendor_id") {
-      parts := strings.SplitN(line, ":", 2)
-      if len(parts) == 2 {
-        vendor := strings.TrimSpace(parts[1])
-        return vendor == "GenuineIntel"
-      }
-    }
-  }
-  return false
-}
-
-func IsIntelPantherLake() bool {
-  cmd := exec.Command("lspci")
-  output, err := cmd.Output()
-  if err != nil {
-    return false
-  }
-  
-  lines := strings.Split(string(output), "\n")
-  for _, line := range lines {
-    lower := strings.ToLower(line)
-    if (strings.Contains(lower, "vga") || strings.Contains(lower, "3d") || strings.Contains(lower, "display")) &&
-       strings.Contains(lower, "panther lake") {
-      return true
-    }
-  }
-  return false
-}
-
-func MatchHardware(pattern string) bool {
-  return dmiMatch("product_name", pattern) || dmiMatch("product_family", pattern)
-}
-
+// IsSurface checks if the system is a Microsoft Surface device
 func IsSurface() bool {
-  vendor, err := dmiRead("sys_vendor")
+  vendor, err := dmi.Vendor()
   if err != nil || vendor != "Microsoft Corporation" {
     return false
   }
   return MatchHardware("Surface")
 }
 
-func HasTouchpad() bool {
-  data, err := os.ReadFile("/proc/bus/input/devices")
-  if err != nil {
-    return false
-  }
-  
-  lower := strings.ToLower(string(data))
-  return strings.Contains(lower, "touchpad") || 
-         strings.Contains(lower, "trackpad") ||
-         strings.Contains(lower, "synaptics")
+// MatchHardware checks if product name or family matches a pattern
+func MatchHardware(pattern string) bool {
+  return dmi.Match("product_name", pattern) || dmi.Match("product_family", pattern)
 }
 
-func HasTouchscreen() bool {
-  data, err := os.ReadFile("/proc/bus/input/devices")
-  if err != nil {
-    return false
-  }
-  
-  lower := strings.ToLower(string(data))
-  return strings.Contains(lower, "touchscreen") || 
-         strings.Contains(lower, "multi-touch") ||
-         strings.Contains(lower, "wacom")
-}
+// Display detection
 
+// HasExternalMonitors checks if external monitors are connected
 func HasExternalMonitors() bool {
   pattern := "/sys/class/drm/card*-*/status"
   matches, err := filepath.Glob(pattern)
@@ -137,17 +74,11 @@ func HasExternalMonitors() bool {
   return false
 }
 
-func HasDellXPSHapticTouchpad() bool {
-  if !MatchHardware("XPS") {
-    return false
-  }
-  
-  _, err := os.Stat("/sys/bus/i2c/devices/i2c-VEN_06CB:00")
-  return err == nil
-}
+// Dell XPS specific
 
+// IsDellXPSOLED checks if Dell XPS has OLED display
 func IsDellXPSOLED() bool {
-  if !MatchHardware("XPS") || !IsIntelPantherLake() {
+  if !MatchHardware("XPS") || !gpu.IsIntelPantherLake() {
     return false
   }
   
@@ -165,104 +96,36 @@ func IsDellXPSOLED() bool {
   return data[8] == 0x30 && data[9] == 0xe4
 }
 
+// Re-export sub-package functions for backward compatibility
+
+func IsIntelCPU() bool {
+  return cpu.IsIntel()
+}
+
+func IsIntelPantherLake() bool {
+  return gpu.IsIntelPantherLake()
+}
+
 func IsHybridGPU() bool {
-  if _, err := exec.LookPath("supergfxctl"); err == nil {
-    cmd := exec.Command("supergfxctl", "-s")
-    output, err := cmd.Output()
-    if err == nil {
-      return strings.Contains(string(output), "Hybrid")
-    }
-  }
-  
-  cmd := exec.Command("lspci")
-  output, err := cmd.Output()
-  if err != nil {
-    return false
-  }
-  
-  count := 0
-  for _, line := range strings.Split(string(output), "\n") {
-    lower := strings.ToLower(line)
-    if strings.Contains(lower, "vga") || strings.Contains(lower, "3d") || strings.Contains(lower, "display") {
-      count++
-    }
-  }
-  return count >= 2
+  return gpu.IsHybrid()
 }
 
 func IsNvidiaGSP() bool {
-  cmd := exec.Command("lspci")
-  output, err := cmd.Output()
-  if err != nil {
-    return false
-  }
-  
-  for _, line := range strings.Split(string(output), "\n") {
-    if !strings.Contains(strings.ToLower(line), "nvidia") {
-      continue
-    }
-    
-    if strings.Contains(line, "GTX 16") ||
-       strings.Contains(line, "RTX 2") ||
-       strings.Contains(line, "RTX 3") ||
-       strings.Contains(line, "RTX 4") ||
-       strings.Contains(line, "RTX 5") ||
-       strings.Contains(line, "RTX PRO") ||
-       strings.Contains(line, "Quadro RTX") ||
-       strings.Contains(line, "RTX A") ||
-       strings.Contains(line, " A100") ||
-       strings.Contains(line, " A30") ||
-       strings.Contains(line, " A40") ||
-       strings.Contains(line, " H100") ||
-       strings.Contains(line, " T4") ||
-       strings.Contains(line, " L4") ||
-       strings.Contains(line, " L40") {
-      return true
-    }
-  }
-  return false
+  return gpu.IsNvidiaGSP()
 }
 
 func IsNvidiaWithoutGSP() bool {
-  cmd := exec.Command("lspci")
-  output, err := cmd.Output()
-  if err != nil {
-    return false
-  }
-  
-  for _, line := range strings.Split(string(output), "\n") {
-    if !strings.Contains(strings.ToLower(line), "nvidia") {
-      continue
-    }
-    
-    if strings.Contains(line, "GTX 9") ||
-       strings.Contains(line, "GTX 10") ||
-       strings.Contains(line, "GT 10") ||
-       strings.Contains(line, "Quadro P") ||
-       strings.Contains(line, "Quadro M") ||
-       strings.Contains(line, "Quadro GV100") ||
-       strings.Contains(line, "MX") ||
-       strings.Contains(line, "Titan X") ||
-       strings.Contains(line, "Titan Xp") ||
-       strings.Contains(line, "Titan V") ||
-       strings.Contains(line, "Tesla V100") {
-      return true
-    }
-  }
-  return false
+  return gpu.IsNvidiaWithoutGSP()
 }
 
 func HasVulkan() bool {
-  dir := "/usr/share/vulkan/icd.d"
-  entries, err := os.ReadDir(dir)
-  if err != nil {
-    return false
-  }
-  
-  for _, entry := range entries {
-    if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".json") {
-      return true
-    }
-  }
-  return false
+  return gpu.HasVulkan()
+}
+
+func HasTouchpad() bool {
+  return input.HasTouchpad()
+}
+
+func HasTouchscreen() bool {
+  return input.HasTouchscreen()
 }

@@ -138,6 +138,78 @@ func sendWithID(opts Options) (string, error) {
   return strings.TrimSpace(string(output)), nil
 }
 
+// SendAndWaitForAction sends a notification with actions and waits for user action
+func SendAndWaitForAction(opts Options) (string, error) {
+  args := []string{"-w"}  // Wait for action
+  
+  if opts.Urgency != "" {
+    args = append(args, "-u", opts.Urgency)
+  }
+  
+  if opts.Icon != "" {
+    args = append(args, "-i", opts.Icon)
+  }
+  
+  // Add action buttons
+  for _, action := range opts.Actions {
+    args = append(args, "-A", action)
+  }
+  
+  // Auto-set timeout for progress bars
+  timeout := opts.Timeout
+  if opts.Progress > 0 && opts.Progress <= 100 {
+    if opts.Progress == 100 && timeout == 0 {
+      timeout = 15000
+    } else if timeout == 0 {
+      timeout = 300000
+    }
+  }
+  
+  if timeout > 0 {
+    args = append(args, "-t", fmt.Sprintf("%d", timeout))
+  }
+  
+  var summary string
+  if opts.Glyph != "" {
+    summary = fmt.Sprintf("%s    %s", opts.Glyph, opts.Headline)
+  } else {
+    summary = opts.Headline
+  }
+  args = append(args, summary)
+  
+  description := opts.Description
+  
+  if opts.Progress > 0 && opts.Progress <= 100 {
+    description = progress.Format(opts.Progress)
+  }
+  
+  if description != "" {
+    var formattedDescription string
+    if opts.Glyph != "" {
+      lines := strings.Split(description, "\n")
+      for i, line := range lines {
+        lines[i] = "      " + line
+      }
+      formattedDescription = strings.Join(lines, "\n")
+    } else {
+      formattedDescription = description
+    }
+    args = append(args, formattedDescription)
+  }
+  
+  if opts.SoundFile != "" {
+    exec.Command("systemd-run", "--user", "--no-block", "paplay", opts.SoundFile).Start()
+  }
+  
+  cmd := exec.Command("notify-send", args...)
+  output, err := cmd.Output()
+  if err != nil {
+    return "", fmt.Errorf("%w: %s", err, string(output))
+  }
+  
+  return strings.TrimSpace(string(output)), nil
+}
+
 func notificationExists(id string) bool {
   cmd := exec.Command("makoctl", "list")
   output, err := cmd.Output()

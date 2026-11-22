@@ -36,6 +36,7 @@ func main() {
   progress := -1
   replaceID := ""
   printID := false
+  waitForAction := false
   var actions []string
 
   i := 1
@@ -93,8 +94,15 @@ func main() {
       continue
     }
     
+    if arg == "-w" || arg == "--wait" {
+      waitForAction = true
+      i++
+      continue
+    }
+    
     if arg == "-A" && i+1 < len(os.Args) {
       actions = append(actions, os.Args[i+1])
+      waitForAction = true  // Auto-enable wait when actions are present
       i += 2
       continue
     }
@@ -140,6 +148,13 @@ func main() {
       os.Exit(1)
     }
     fmt.Println(id)
+  } else if waitForAction {
+    action, err := notification.SendAndWaitForAction(opts)
+    if err != nil {
+      fmt.Fprintf(os.Stderr, "Error sending notification: %v\n", err)
+      os.Exit(1)
+    }
+    fmt.Println(action)
   } else {
     err := notification.Send(opts)
     if err != nil {

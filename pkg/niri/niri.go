@@ -80,6 +80,49 @@ func GetFocusedOutput() (string, error) {
   return "", fmt.Errorf("no focused output")
 }
 
+// OutputMode represents a display mode
+type OutputMode struct {
+  Width        int  `json:"width"`
+  Height       int  `json:"height"`
+  RefreshRate  int  `json:"refresh_rate"`
+  IsPreferred  bool `json:"is_preferred"`
+}
+
+// LogicalOutput represents the logical output dimensions
+type LogicalOutput struct {
+  X         int     `json:"x"`
+  Y         int     `json:"y"`
+  Width     int     `json:"width"`
+  Height    int     `json:"height"`
+  Scale     float64 `json:"scale"`
+  Transform string  `json:"transform"`
+}
+
+// Output represents a niri output (display)
+type Output struct {
+  Name         string        `json:"name"`
+  Make         string        `json:"make"`
+  Model        string        `json:"model"`
+  Modes        []OutputMode  `json:"modes"`
+  CurrentMode  int           `json:"current_mode"`
+  Logical      LogicalOutput `json:"logical"`
+}
+
+// GetFocusedOutputInfo returns full info about the currently focused output
+func GetFocusedOutputInfo() (*Output, error) {
+  out, err := exec.Command("niri", "msg", "--json", "focused-output").Output()
+  if err != nil {
+    return nil, err
+  }
+
+  var output Output
+  if err := json.Unmarshal(out, &output); err != nil {
+    return nil, err
+  }
+
+  return &output, nil
+}
+
 // GetCurrentScale returns the current scale for the given output
 func GetCurrentScale(output string) (float64, error) {
   out, err := exec.Command("niri", "msg", "outputs").Output()

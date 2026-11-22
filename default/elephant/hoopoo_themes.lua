@@ -77,7 +77,7 @@ function GetEntries()
             Preview = preview_path,
             PreviewType = "file",
             Actions = {
-              activate = "hoopoo-theme-set " .. theme_name,
+              activate = "hoopoo theme set " .. theme_name,
             },
           })
         end

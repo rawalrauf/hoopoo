@@ -1,6 +1,6 @@
 // Video thumbnail generation for media files
 
-package media
+package video
 
 import (
   "bytes"

@@ -17,16 +17,27 @@ Hoopoo is an Arch Linux-based distribution focused on performance and user exper
   - `pkg/notification/` - desktop notifications (mako integration)
     - `pkg/notification/progress/` - progress bar formatting
   - `pkg/battery/` - battery-related operations
-  - `pkg/hardware/` - hardware detection
+  - `pkg/hardware/` - hardware detection (restructured with sub-packages)
+    - `pkg/hardware/cpu/` - CPU detection
+    - `pkg/hardware/dmi/` - DMI/SMBIOS queries
+    - `pkg/hardware/gpu/` - GPU detection
+    - `pkg/hardware/input/` - input device detection
+    - `pkg/hardware/audio/` - audio device detection
+    - `pkg/hardware/webcam/` - webcam device detection
   - `pkg/ytdlp/` - yt-dlp download operations
-  - `pkg/media/` - video thumbnail generation
+  - `pkg/media/` - media processing
+    - `pkg/media/video/` - video thumbnail generation and processing
+    - `pkg/media/transcode/` - picture and video transcoding
+    - `pkg/media/recorder/` - screen recording with webcam overlay
+  - `pkg/portal/` - XDG Desktop Portal integration via D-Bus
+    - `pkg/portal/fileselect.go` - native file/folder picker (replaces fzf/walker for file selection)
   - `pkg/niri/` - niri compositor operations (GetWindows, GetInternalDisplay, FocusWindow, EventStream, etc.)
     - `pkg/niri/config/` - KDL config editor with comment preservation
   - `pkg/toggle/` - generic toggle state management (Enabled, Disabled, Clear, Write)
   - `pkg/font/` - font detection and management (state file-based)
   - `pkg/walker/` - font-aware walker dimensions and launcher utilities
   - `pkg/system/paths/` - path utilities (UserConfig, State, Hoopoo, etc.)
-  - `pkg/system/process/` - process management (IsRunning, Kill, KillForce)
+  - `pkg/system/process/` - process management (IsRunning, Kill, KillForce, KillByPattern, Start, SendSignal)
   - `pkg/system/hooks/` - hook execution
   - `pkg/system/systemd/` - systemd service management
 
@@ -357,8 +368,12 @@ bin/hoopoo                      (single binary, 5-10MB)
 - `font-*` (3 commands: current, list, set - state file-based font management)
 - `menu-*` (2 commands: keybindings, tmux-keybindings - interactive search menus)
 - `sudo-reset` (1 command: reset faillock)
+- `capture-*` (5 commands: screenshot with satty, screenrecording with webcam, text extraction OCR, color picker, transcode)
+- `share-*` (3 commands: clipboard, file, folder - LocalSend integration with portal file picker)
+- `transcode` (1 command: picture/video transcoding with portal file picker)
+- `file-select` (1 command: native file/folder picker using XDG Desktop Portal)
 
-**Total:** 101 Go commands migrated
+**Total:** 111 Go commands migrated
 
 ## Architecture Principles
 
@@ -373,12 +388,14 @@ bin/hoopoo                      (single binary, 5-10MB)
 - **In cmd/, prefer binaries over pkg when available:**
   - Use `exec.Command("hoopoo", "notification", "send", ...)` instead of `notification.Send()`
   - Use `exec.Command("hoopoo", "restart", "waybar")` instead of direct systemd calls
-  - Exception: When pkg provides the ONLY interface (e.g., `niri.GetWindows()`, `font.Current()`)
+  - Use `exec.Command("hoopoo", "file", "select", ...)` for interactive file picking instead of walker/fzf
+  - Exception: When pkg provides the ONLY interface (e.g., `niri.GetWindows()`, `font.Current()`, `portal.SelectFiles()`)
 - **Use packages directly for:**
   - System infrastructure (paths, toggle, process, hooks)
   - Complex operations with no binary equivalent (niri.GetWindows, niri.EventStream)
   - State file operations (toggle.Write, font.StateFile)
   - Reading configuration (font.Current, walker dimensions)
+  - Portal file selection when calling from pkg context (rare, prefer binary in cmd/)
 - **Rule:** pkg/ should only call system tools (fc-list, niri msg, notify-send), never hoopoo binaries
 - **Exception:** Low-level operations that form the foundation for binaries use pkg directly
 
@@ -387,8 +404,10 @@ bin/hoopoo                      (single binary, 5-10MB)
 // ✅ CORRECT in cmd/
 exec.Command("hoopoo", "notification", "send", "Title").Run()
 exec.Command("hoopoo", "restart", "waybar").Run()
+exec.Command("hoopoo", "file", "select", "--multiple").Output() // Interactive file picking
 fontName := font.Current() // No binary equivalent, pkg is source
 dims := walker.Get() // Reading config, not executing action
+paths, _ := portal.SelectFiles(...) // Direct pkg usage when binary call is awkward
 
 // ✅ CORRECT in pkg/
 exec.Command("fc-list", ":spacing=100").Output() // System tool
@@ -398,6 +417,7 @@ exec.Command("notify-send", "Title").Run() // System tool
 // ❌ WRONG in pkg/
 exec.Command("hoopoo", "restart", "waybar").Run() // Never call hoopoo from pkg
 exec.Command("hoopoo", "notification", "send").Run() // Never call hoopoo from pkg
+exec.Command("hoopoo", "file", "select").Run() // Never call hoopoo from pkg
 ```
 
 ## Code Style
@@ -433,6 +453,10 @@ niri.WriteState("gaps-enabled.kdl", "content")  → toggle.Write("niri/gaps-enab
 
 **Notification API:**
 ```go
+// Command-line usage (NEW format with --glyph flag):
+exec.Command("hoopoo", "notification", "send", "--glyph=󰔛", "Headline", "Description", "-u", "critical").Run()
+
+// Package usage:
 notification.Send(notification.Options{
   Glyph:       "🔋",
   Headline:    "Battery Low",
@@ -448,8 +472,65 @@ Progress bars use `pkg/notification/progress/Format()` with `■□` blocks.
 
 All fields are optional.
 
+**Portal file selection (replaces walker/fzf for file picking):**
+
+**ALWAYS use portal for interactive file selection** - provides native file manager dialog across all desktop environments.
+
+```go
+// Binary usage (from any command):
+cmd := exec.Command("hoopoo", "file", "select",
+  "--title", "Select files to transcode",
+  "--extensions", "mp4 mov mkv jpg png",
+  "--multiple",  // Allow multiple selection
+)
+output, err := cmd.Output()
+// Returns newline-separated file paths
+
+// For directories:
+cmd := exec.Command("hoopoo", "file", "select",
+  "--title", "Select folder to share",
+  "--directory",
+)
+
+// Package usage (direct API):
+import "hoopoo/pkg/portal"
+
+paths, err := portal.SelectFiles(portal.FileSelectOptions{
+  Title:      "Select media files",
+  Extensions: []string{"mp4", "mov", "mkv", "jpg", "png"},
+  Multiple:   true,     // Allow multiple files
+  Directory:  false,    // false for files, true for folders
+})
+```
+
+**When to use portal:**
+- ✅ Any interactive file/folder selection in commands
+- ✅ Transcode, share, file uploads, media selection
+- ✅ Replaces walker file menus and fzf file pickers
+- ❌ Don't use for config file paths (use paths.UserConfig)
+- ❌ Don't use for programmatic file discovery (use filepath.Walk)
+
+**Portal error handling:**
+```go
+if err != nil {
+  if errors.Is(err, portal.ErrNoFilesSelected) || errors.Is(err, portal.ErrSelectionCancelled) {
+    os.Exit(0) // User cancelled - exit silently
+  }
+  fmt.Fprintf(os.Stderr, "error: %v\n", err)
+  os.Exit(1)
+}
+```
+
+**Benefits:**
+- Native file manager integration (GNOME Files, Dolphin, etc.)
+- Works in all desktop environments (GNOME, KDE, wlroots)
+- Sandboxed app support (Flatpak-safe)
+- Better UX than terminal-based pickers
+- File type filtering built-in
+
 **Common patterns:**
 - Use `paths.State()`, `paths.Hoopoo()`, `paths.Runtime()` for path resolution
+- Use `portal.SelectFiles()` for interactive file/folder selection (replaces walker/fzf)
 - Call external binaries with `exec.Command("hoopoo", "group", "command")` via dispatcher
 - Use pkg/ packages for reusable logic, organize with sub-packages when needed
 - Commands are modular and call each other, designed for eventual single-binary consolidation

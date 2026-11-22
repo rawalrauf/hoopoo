@@ -16,12 +16,6 @@ window-rule {
     }
 }
 
-window-rule {
-    match is-floating=true
-    clip-to-geometry true
-    geometry-corner-radius 8
-}
-
 //apps sepecific tweeks
 include "~/.local/share/hoopoo/default/niri/apps.kdl"
 

@@ -10,6 +10,7 @@ import (
   "strings"
 
   "hoopoo/pkg/system/paths"
+  "hoopoo/pkg/system/process"
 )
 
 // StateFile returns the path to the font state file
@@ -149,7 +150,7 @@ func updateKitty(fontName string) {
       }
     }
     os.WriteFile(configPath, []byte(strings.Join(lines, "\n")), 0644)
-    exec.Command("pkill", "-USR1", "kitty").Run()
+    process.SendSignal("USR1", "kitty")
   }
 }
 
