@@ -3,7 +3,8 @@
 package main
 
 import (
-  "hoopoo/pkg/notification"
+  "os/exec"
+  
   "hoopoo/pkg/toggle"
 )
 
@@ -11,18 +12,18 @@ func main() {
   if toggle.Enabled("suspend-off") {
     // Currently disabled, enable it
     toggle.Clear("suspend-off")
-    notification.Send(notification.Options{
-      Urgency:  "low",
-      Glyph:    "󰒲",
-      Headline: "Suspend now available in system menu",
-    })
+    exec.Command("hoopoo", "notification", "send",
+      "--glyph=󰒲",
+      "Suspend now available in system menu",
+      "-u", "low",
+    ).Run()
   } else {
     // Currently enabled, disable it
     toggle.Write("suspend-off", "")
-    notification.Send(notification.Options{
-      Urgency:  "low",
-      Glyph:    "󰒲",
-      Headline: "Suspend removed from system menu",
-    })
+    exec.Command("hoopoo", "notification", "send",
+      "--glyph=󰒲",
+      "Suspend removed from system menu",
+      "-u", "low",
+    ).Run()
   }
 }

@@ -154,8 +154,6 @@ func getSubmenu(name string) func() []menu.MenuItem {
   // Setup submenu shortcuts (used by waybar)
   case "power":
     return PowerProfileMenu
-  case "setup":
-    return SetupMenu
 
   default:
     return nil
