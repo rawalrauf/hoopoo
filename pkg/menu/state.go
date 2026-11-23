@@ -41,6 +41,21 @@ func IsWaybarEnabled() bool {
   return process.IsRunning("waybar")
 }
 
+// IsWaybarTransparent checks waybar transparency toggle state
+func IsWaybarTransparent() bool {
+  return toggle.Enabled("waybar-transparent")
+}
+
+// IsWaybarPositionTop checks if waybar is at top (default if no toggle file)
+func IsWaybarPositionTop() bool {
+  return toggle.Disabled("waybar-position-bottom")
+}
+
+// IsWaybarPositionBottom checks if waybar is at bottom
+func IsWaybarPositionBottom() bool {
+  return toggle.Enabled("waybar-position-bottom")
+}
+
 // IsGapsEnabled checks niri gaps toggle
 func IsGapsEnabled() bool {
   return niri.StateEnabled("gaps-enabled.kdl")

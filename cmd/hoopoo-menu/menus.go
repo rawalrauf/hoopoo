@@ -16,13 +16,13 @@ func MainMenu() []menu.MenuItem {
     {Icon: "󰀻", Label: "Apps", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "walker"}}},
     {Icon: "󰧑", Label: "Learn", Action: &menu.SubmenuAction{MenuFunc: LearnMenu}},
     {Icon: "󱓞", Label: "Trigger", Action: &menu.SubmenuAction{MenuFunc: TriggerMenu}},
-    {Icon: "", Label: "Appearance", Action: &menu.SubmenuAction{MenuFunc: AppearanceMenu}},
-    {Icon: "", Label: "Setup", Action: &menu.SubmenuAction{MenuFunc: SetupMenu}},
+    {Icon: "", Label: "Appearance", Action: &menu.SubmenuAction{MenuFunc: AppearanceMenu}},
+    {Icon: "", Label: "Setup", Action: &menu.SubmenuAction{MenuFunc: SetupMenu}},
     {Icon: "󰉉", Label: "Install", Action: &menu.SubmenuAction{MenuFunc: InstallMenu}},
     {Icon: "󰭌", Label: "Remove", Action: &menu.SubmenuAction{MenuFunc: RemoveMenu}},
-    {Icon: "", Label: "Update", Action: &menu.SubmenuAction{MenuFunc: UpdateMenu}},
-    {Icon: "", Label: "About", Action: &menu.SubmenuAction{MenuFunc: AboutMenu}},
-    {Icon: "", Label: "System", Action: &menu.SubmenuAction{MenuFunc: SystemMenu}},
+    {Icon: "", Label: "Update", Action: &menu.SubmenuAction{MenuFunc: UpdateMenu}},
+    {Icon: "", Label: "About", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "about"}}},
+    {Icon: "", Label: "System", Action: &menu.SubmenuAction{MenuFunc: SystemMenu}},
   }
 }
 
@@ -236,12 +236,11 @@ func HardwareMenu() []menu.MenuItem {
 func AppearanceMenu() []menu.MenuItem {
   return []menu.MenuItem{
     {Icon: "󰸌", Label: "Theme", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "walker", "-m", "menus:hoopoothemes", "--width", "800", "--minheight", "400"}}},
+    {Icon: "󰟵", Label: "Unlock Screen", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "walker", "-m", "menus:hoopoounlocks", "--width", "800", "--minheight", "400"}}},
     {Icon: "", Label: "Background", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "walker", "-m", "menus:hoopooBackgroundSelector", "--width", "800", "--minheight", "400"}}},
     {Icon: "", Label: "Font", Action: &menu.SubmenuAction{MenuFunc: FontMenu}},
-    {Icon: "󰝘", Label: "Windows", Action: &menu.SubmenuAction{MenuFunc: WindowsMenu}},
+    {Icon: "󰖯", Label: "Windows", Action: &menu.SubmenuAction{MenuFunc: WindowsMenu}},
     {Icon: "󰍜", Label: "Top Bar", Action: &menu.SubmenuAction{MenuFunc: TopBarMenu}},
-    {Icon: "󰟵", Label: "Unlock Screen", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "walker", "-m", "menus:hoopoounlocks", "--width", "800", "--minheight", "400"}}},
-    {Icon: "", Label: "About Screen", Action: &menu.SubmenuAction{MenuFunc: AboutScreenMenu}},
   }
 }
 
@@ -258,8 +257,16 @@ func WindowsMenu() []menu.MenuItem {
 func TopBarMenu() []menu.MenuItem {
   return []menu.MenuItem{
     {Icon: "󰍜", Label: menu.Checkmark("Visibility", menu.IsWaybarEnabled()), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"toggle", "waybar"}}},
-    {Icon: "", Label: "Position", Action: &menu.CommandAction{Command: "echo", Args: []string{"TODO: Top/Bottom position toggle"}}},
-    {Icon: "󰂵", Label: "Transparency", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"toggle", "waybar", "transparency"}}},
+    {Icon: "󰂵", Label: menu.Checkmark("Transparency", menu.IsWaybarTransparent()), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"toggle", "waybar", "transparency"}}},
+    {Icon: "󰡏", Label: "Position", Action: &menu.SubmenuAction{MenuFunc: WaybarPositionMenu}},
+  }
+}
+
+// WaybarPositionMenu - waybar position selection (top or bottom)
+func WaybarPositionMenu() []menu.MenuItem {
+  return []menu.MenuItem{
+    {Icon: "󰘣", Label: menu.Checkmark("Top", menu.IsWaybarPositionTop()), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"toggle", "waybar", "position"}}},
+    {Icon: "󰘡", Label: menu.Checkmark("Bottom", menu.IsWaybarPositionBottom()), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"toggle", "waybar", "position"}}},
   }
 }
 
@@ -294,15 +301,6 @@ func FontMenu() []menu.MenuItem {
   }
 
   return items
-}
-
-// AboutScreenMenu - branding/about screen
-func AboutScreenMenu() []menu.MenuItem {
-  return []menu.MenuItem{
-    {Icon: "", Label: "Edit Text", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"branding", "about", "text"}}},
-    {Icon: "", Label: "Set From Image", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"branding", "about", "image"}}},
-    {Icon: "", Label: "Restore Default", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"branding", "about", "reset"}}},
-  }
 }
 
 // SetupMenu - system configuration (now includes monitor scaling)
@@ -386,12 +384,7 @@ func UpdateMenu() []menu.MenuItem {
 }
 
 // AboutMenu - placeholder
-func AboutMenu() []menu.MenuItem {
-  return []menu.MenuItem{
-    {Icon: "", Label: "TODO: About menu", Action: &menu.CommandAction{Command: "echo", Args: []string{"Not implemented yet"}}},
-  }
-}
-
+// AboutMenu - about Hoopoo
 // SystemMenu - placeholder
 func SystemMenu() []menu.MenuItem {
   items := []menu.MenuItem{

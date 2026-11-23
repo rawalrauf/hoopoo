@@ -110,44 +110,24 @@ func getSubmenu(name string) func() []menu.MenuItem {
       }
       return nil
     }
-  case "learn":
-    return LearnMenu
-  case "trigger":
-    return TriggerMenu
-  case "appearance":
-    return AppearanceMenu
-  case "setup":
-    return SetupMenu
-  case "install":
-    return InstallMenu
-  case "remove":
-    return RemoveMenu
-  case "update":
-    return UpdateMenu
-  case "about":
-    return AboutMenu
   case "system":
     return SystemMenu
-
-  // Trigger submenu shortcuts
+  
+  // Trigger submenu shortcuts (used in keybinds)
   case "reminder":
     return ReminderMenu
-  case "capture":
-    return CaptureMenu
   case "share":
     return ShareMenu
   case "toggle":
     return TogglesMenu
-  case "hardware":
-    return HardwareMenu
-
-  // Capture submenu shortcuts
+  
+  // Capture submenu shortcuts (used in keybinds)
   case "screenshot":
     return ScreenshotMenu
   case "screenrecord":
     return ScreenrecordMenu
-
-  // Appearance submenu shortcuts
+  
+  // Appearance submenu shortcuts (used in keybinds)
   case "theme":
     // Extract Theme item from AppearanceMenu
     return func() []menu.MenuItem {
@@ -170,12 +150,8 @@ func getSubmenu(name string) func() []menu.MenuItem {
       }
       return nil
     }
-  case "font":
-    return FontMenu
-  case "windows":
-    return WindowsMenu
-
-  // Setup submenu shortcuts
+  
+  // Setup submenu shortcuts (used by waybar)
   case "power":
     return PowerProfileMenu
 
