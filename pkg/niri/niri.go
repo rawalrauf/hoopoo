@@ -61,6 +61,34 @@ func GetExternalDisplay() (string, error) {
   return "", fmt.Errorf("no external display found")
 }
 
+// GetAllOutputs returns all connected output names
+func GetAllOutputs() ([]string, error) {
+  out, err := exec.Command("niri", "msg", "outputs").Output()
+  if err != nil {
+    return nil, err
+  }
+
+  var outputs []string
+  lines := strings.Split(string(out), "\n")
+  
+  for _, line := range lines {
+    // Only match output names on lines starting with "Output"
+    if strings.HasPrefix(line, "Output") {
+      re := regexp.MustCompile(`\(([^)]+)\)`)
+      match := re.FindStringSubmatch(line)
+      if len(match) > 1 {
+        outputs = append(outputs, match[1])
+      }
+    }
+  }
+  
+  if len(outputs) == 0 {
+    return nil, fmt.Errorf("no outputs found")
+  }
+  
+  return outputs, nil
+}
+
 // GetFocusedOutput returns the name of the currently focused output
 func GetFocusedOutput() (string, error) {
   out, err := exec.Command("niri", "msg", "--json", "focused-output").Output()
@@ -156,6 +184,72 @@ func GetCurrentScale(output string) (float64, error) {
   }
 
   return 1.0, fmt.Errorf("scale not found for output %s", output)
+}
+
+// GetCurrentResolution returns the current resolution for the given output (e.g., "1920x1080")
+func GetCurrentResolution(output string) (string, error) {
+  out, err := exec.Command("niri", "msg", "outputs").Output()
+  if err != nil {
+    return "", err
+  }
+
+  lines := strings.Split(string(out), "\n")
+  inTarget := false
+  
+  for _, line := range lines {
+    if strings.Contains(line, "("+output+")") {
+      inTarget = true
+      continue
+    }
+    if inTarget && strings.Contains(line, "Current mode:") {
+      // Parse "Current mode: 1920x1080 @ 60.008 Hz (preferred)"
+      parts := strings.Fields(line)
+      for i, part := range parts {
+        if part == "mode:" && i+1 < len(parts) {
+          // Extract resolution (e.g., "1920x1080")
+          resolution := parts[i+1]
+          return resolution, nil
+        }
+      }
+    }
+    if inTarget && strings.HasPrefix(line, "Output") {
+      break
+    }
+  }
+
+  return "", fmt.Errorf("resolution not found for output %s", output)
+}
+
+// GetCurrentTransform returns the current transform for the given output (e.g., "normal", "90", "180", "270")
+func GetCurrentTransform(output string) (string, error) {
+  out, err := exec.Command("niri", "msg", "outputs").Output()
+  if err != nil {
+    return "", err
+  }
+
+  lines := strings.Split(string(out), "\n")
+  inTarget := false
+  
+  for _, line := range lines {
+    if strings.Contains(line, "("+output+")") {
+      inTarget = true
+      continue
+    }
+    if inTarget && strings.Contains(line, "Transform:") {
+      parts := strings.Fields(line)
+      for i, part := range parts {
+        if part == "Transform:" && i+1 < len(parts) {
+          transform := parts[i+1]
+          return transform, nil
+        }
+      }
+    }
+    if inTarget && strings.HasPrefix(line, "Output") {
+      break
+    }
+  }
+
+  return "normal", fmt.Errorf("transform not found for output %s", output)
 }
 
 // Window represents a niri window

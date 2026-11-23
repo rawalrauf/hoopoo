@@ -322,19 +322,76 @@ func SetupMenu() []menu.MenuItem {
 // MonitorsMenu - monitor configuration (now includes scaling from old Toggle menu)
 func MonitorsMenu() []menu.MenuItem {
   return []menu.MenuItem{
-    {Icon: "󰍹", Label: "Scaling", Action: &menu.SubmenuAction{MenuFunc: MonitorScalingMenu}},
+    {Icon: "󰍹", Label: "Scale", Action: &menu.SubmenuAction{MenuFunc: MonitorScaleMenu}},
     {Icon: "", Label: "Edit Config", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "editor", "~/.config/niri/monitors.kdl"}}},
   }
 }
 
-// MonitorScalingMenu - submenu for monitor scaling
-func MonitorScalingMenu() []menu.MenuItem {
-  current := menu.GetCurrentMonitorScale()
+// MonitorScaleMenu - smart routing: show monitor selection if multiple monitors, else show scale values directly
+func MonitorScaleMenu() []menu.MenuItem {
+  // Check if external monitors are connected
+  if !menu.HasExternalMonitors() {
+    // Single monitor: go directly to scale values
+    return MonitorScaleValuesMenu("")
+  }
+  
+  // Multiple monitors: show monitor selection first
+  return MonitorSelectionMenu("scale")
+}
+
+// MonitorSelectionMenu - select which monitor to configure (for scale/resolution/transform)
+func MonitorSelectionMenu(action string) []menu.MenuItem {
+  outputs, err := menu.GetAllOutputNames()
+  if err != nil || len(outputs) == 0 {
+    // Fallback to direct action if can't get outputs
+    switch action {
+    case "scale":
+      return MonitorScaleValuesMenu("")
+    default:
+      return []menu.MenuItem{}
+    }
+  }
+  
+  var items []menu.MenuItem
+  for _, output := range outputs {
+    // Create a closure to capture the output name
+    outputName := output
+    var submenuFunc func() []menu.MenuItem
+    
+    switch action {
+    case "scale":
+      submenuFunc = func() []menu.MenuItem {
+        return MonitorScaleValuesMenu(outputName)
+      }
+    }
+    
+    items = append(items, menu.MenuItem{
+      Icon:   "󰍹",
+      Label:  outputName,
+      Action: &menu.SubmenuAction{MenuFunc: submenuFunc},
+    })
+  }
+  
+  return items
+}
+
+// MonitorScaleValuesMenu - show scale values for a specific monitor (or default if empty)
+func MonitorScaleValuesMenu(output string) []menu.MenuItem {
+  current := menu.GetCurrentMonitorScale(output)
+  
+  // Build base command args - add --output flag if monitor specified
+  var baseArgs []string
+  if output != "" {
+    baseArgs = []string{"niri", "monitor", "scaling", "cycle", "--output", output, "--set"}
+  } else {
+    baseArgs = []string{"niri", "monitor", "scaling", "cycle", "--set"}
+  }
+  
   return []menu.MenuItem{
-    {Icon: "", Label: menu.Checkmark("1.0", current == "1"), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"niri", "monitor", "scaling", "cycle", "--set", "1"}}},
-    {Icon: "", Label: menu.Checkmark("1.25", current == "1.25"), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"niri", "monitor", "scaling", "cycle", "--set", "1.25"}}},
-    {Icon: "", Label: menu.Checkmark("1.5", current == "1.5"), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"niri", "monitor", "scaling", "cycle", "--set", "1.5"}}},
-    {Icon: "", Label: menu.Checkmark("2.0", current == "2"), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"niri", "monitor", "scaling", "cycle", "--set", "2"}}},
+    {Icon: "", Label: menu.Checkmark("1.0", current == "1"), Action: &menu.CommandAction{Command: "hoopoo", Args: append(baseArgs, "1")}},
+    {Icon: "", Label: menu.Checkmark("1.25", current == "1.25"), Action: &menu.CommandAction{Command: "hoopoo", Args: append(baseArgs, "1.25")}},
+    {Icon: "", Label: menu.Checkmark("1.5", current == "1.5"), Action: &menu.CommandAction{Command: "hoopoo", Args: append(baseArgs, "1.5")}},
+    {Icon: "", Label: menu.Checkmark("2.0", current == "2"), Action: &menu.CommandAction{Command: "hoopoo", Args: append(baseArgs, "2")}},
   }
 }
 

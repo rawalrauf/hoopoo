@@ -1,7 +1,7 @@
 // hoopoo:summary=Set or cycle niri output scaling through 1x, 1.25x, 1.5x, 2x
 // hoopoo:group=niri
 // hoopoo:name=monitor scaling cycle
-// hoopoo:args=[--set <scale>|--reverse|--current]
+// hoopoo:args=[--output <name>] [--set <scale>|--reverse|--current]
 
 package main
 
@@ -11,6 +11,7 @@ import (
   "os"
   "os/exec"
   "strconv"
+  "strings"
 
   "hoopoo/pkg/niri"
   "hoopoo/pkg/niri/config"
@@ -18,7 +19,12 @@ import (
 
 var scales = []float64{1, 1.25, 1.5, 2}
 
-func getOutput() (string, error) {
+func getOutput(explicitOutput string) (string, error) {
+  // Use explicit output if provided
+  if explicitOutput != "" {
+    return explicitOutput, nil
+  }
+  
   // Try to get eDP output first
   internal, err := niri.GetInternalDisplay()
   if err == nil {
@@ -49,7 +55,33 @@ func updateConfigFile(output string, newScale float64) error {
 }
 
 func main() {
-  output, err := getOutput()
+  var explicitOutput string
+  var setScale string
+  var reverse bool
+  var current bool
+  
+  // Parse arguments
+  for i := 1; i < len(os.Args); i++ {
+    arg := os.Args[i]
+    
+    if strings.HasPrefix(arg, "--output=") {
+      explicitOutput = strings.TrimPrefix(arg, "--output=")
+    } else if arg == "--output" && i+1 < len(os.Args) {
+      explicitOutput = os.Args[i+1]
+      i++
+    } else if strings.HasPrefix(arg, "--set=") {
+      setScale = strings.TrimPrefix(arg, "--set=")
+    } else if arg == "--set" && i+1 < len(os.Args) {
+      setScale = os.Args[i+1]
+      i++
+    } else if arg == "--reverse" {
+      reverse = true
+    } else if arg == "--current" {
+      current = true
+    }
+  }
+  
+  output, err := getOutput(explicitOutput)
   if err != nil {
     exec.Command("hoopoo", "notification", "send", "-u", "low", "󰍹  No output found").Run()
     os.Exit(1)
@@ -61,7 +93,7 @@ func main() {
   }
 
   // Handle --current flag
-  if len(os.Args) > 1 && os.Args[1] == "--current" {
+  if current {
     fmt.Println(currentScale)
     return
   }
@@ -69,8 +101,8 @@ func main() {
   var newScale float64
 
   // Handle --set flag
-  if len(os.Args) > 2 && os.Args[1] == "--set" {
-    newScale, err = strconv.ParseFloat(os.Args[2], 64)
+  if setScale != "" {
+    newScale, err = strconv.ParseFloat(setScale, 64)
     if err != nil {
       fmt.Fprintln(os.Stderr, "Invalid scale value")
       os.Exit(1)
@@ -80,7 +112,7 @@ func main() {
     currentIdx := findClosestScaleIndex(currentScale)
     
     var newIdx int
-    if len(os.Args) > 1 && os.Args[1] == "--reverse" {
+    if reverse {
       newIdx = (currentIdx - 1 + len(scales)) % len(scales)
     } else {
       newIdx = (currentIdx + 1) % len(scales)
@@ -98,5 +130,5 @@ func main() {
     os.Exit(1)
   }
   
-  exec.Command("hoopoo", "notification", "send", "-u", "low", fmt.Sprintf("󰍹  Display scaling set to %gx", newScale)).Run()
+  exec.Command("hoopoo", "notification", "send", "-u", "low", fmt.Sprintf("󰍹  %s scaling set to %gx", output, newScale)).Run()
 }

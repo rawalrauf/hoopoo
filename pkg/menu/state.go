@@ -3,11 +3,13 @@
 package menu
 
 import (
+  "fmt"
   "os"
   "os/exec"
   "strings"
 
   "hoopoo/pkg/font"
+  "hoopoo/pkg/hardware"
   "hoopoo/pkg/niri"
   "hoopoo/pkg/system/process"
   "hoopoo/pkg/toggle"
@@ -136,10 +138,69 @@ func GetCurrentEditor() string {
   return ""
 }
 
-// GetCurrentMonitorScale returns the current monitor scale
-func GetCurrentMonitorScale() string {
-  // TODO: Implement monitor scale detection from niri
-  return "1"
+// GetCurrentMonitorScale returns the current monitor scale for a specific output
+func GetCurrentMonitorScale(output string) string {
+  // If no output specified, try eDP first, then focused
+  if output == "" {
+    var err error
+    output, err = niri.GetInternalDisplay()
+    if err != nil {
+      output, err = niri.GetFocusedOutput()
+      if err != nil {
+        return "1"
+      }
+    }
+  }
+  
+  scale, err := niri.GetCurrentScale(output)
+  if err != nil {
+    return "1"
+  }
+  
+  // Format scale value (remove trailing zeros)
+  return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.2f", scale), "0"), ".")
+}
+
+// GetCurrentMonitorResolution returns the current resolution for a specific output
+func GetCurrentMonitorResolution(output string) string {
+  if output == "" {
+    var err error
+    output, err = niri.GetInternalDisplay()
+    if err != nil {
+      output, err = niri.GetFocusedOutput()
+      if err != nil {
+        return ""
+      }
+    }
+  }
+  
+  resolution, err := niri.GetCurrentResolution(output)
+  if err != nil {
+    return ""
+  }
+  
+  return resolution
+}
+
+// GetCurrentMonitorTransform returns the current transform for a specific output
+func GetCurrentMonitorTransform(output string) string {
+  if output == "" {
+    var err error
+    output, err = niri.GetInternalDisplay()
+    if err != nil {
+      output, err = niri.GetFocusedOutput()
+      if err != nil {
+        return "normal"
+      }
+    }
+  }
+  
+  transform, err := niri.GetCurrentTransform(output)
+  if err != nil {
+    return "normal"
+  }
+  
+  return transform
 }
 
 // GetCurrentUpdateChannel returns the update channel (stable/dev)
@@ -161,4 +222,14 @@ func IsSuspendDisabled() bool {
 func IsHibernationAvailable() bool {
   cmd := exec.Command("hoopoo", "hibernation", "available")
   return cmd.Run() == nil
+}
+
+// HasExternalMonitors checks if external monitors are connected
+func HasExternalMonitors() bool {
+  return hardware.HasExternalMonitors()
+}
+
+// GetAllOutputNames returns all connected output names
+func GetAllOutputNames() ([]string, error) {
+  return niri.GetAllOutputs()
 }
