@@ -16,7 +16,7 @@ spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 spawn-sh-at-startup "uwsm app -- udiskie --automount --no-notify --no-tray"
 
 // Power profile based on AC/battery state
-spawn-sh-at-startup "hoopoo-powerprofiles-init"
+spawn-sh-at-startup "hoopoo-powerprofiles-set"
 
 // First boot setup (runs once, deletes its own marker after)
 spawn-sh-at-startup "hoopoo-first-run"

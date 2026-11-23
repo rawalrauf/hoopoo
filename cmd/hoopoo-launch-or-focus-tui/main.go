@@ -75,15 +75,17 @@ func main() {
     title = cmdName
   }
 
-  // Build launch command arguments
+  // Build launch command arguments (shell-quoted since they get run via sh -c)
   launchArgs := []string{
     "hoopoo",
     "launch",
     "tui",
-    fmt.Sprintf("--app-id=%s", targetAppID),
-    fmt.Sprintf("--title=%s", title),
+    fmt.Sprintf("--app-id=%s", shellQuote(targetAppID)),
+    fmt.Sprintf("--title=%s", shellQuote(title)),
   }
-  launchArgs = append(launchArgs, args...)
+  for _, arg := range args {
+    launchArgs = append(launchArgs, shellQuote(arg))
+  }
   launchCommand := strings.Join(launchArgs, " ")
 
   // Call hoopoo launch or focus
@@ -102,5 +104,10 @@ func main() {
   finalCmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
   
   finalCmd.Run()
+}
+
+// shellQuote wraps a string in single quotes for safe use in sh -c
+func shellQuote(s string) string {
+  return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 

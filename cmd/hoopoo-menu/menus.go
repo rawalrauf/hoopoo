@@ -138,7 +138,7 @@ func WebcamMenu() []menu.MenuItem {
   // If no webcams or error, use default
   if err != nil || len(devices) == 0 {
     return []menu.MenuItem{
-      {Icon: "", Label: "Default webcam", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"capture", "screenrecording", "--with-desktop-audio", "--with-microphone-audio", "--with-webcam"}}},
+      {Icon: "󰖠", Label: "Default webcam", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"capture", "screenrecording", "--with-desktop-audio", "--with-microphone-audio", "--with-webcam"}}},
     }
   }
 
@@ -164,7 +164,7 @@ func WebcamMenu() []menu.MenuItem {
     }
 
     items = append(items, menu.MenuItem{
-      Icon:   "",
+      Icon:   "󰖠",
       Label:  deviceName,
       Action: &menu.CommandAction{
         Command: "hoopoo",
@@ -279,7 +279,7 @@ func FontMenu() []menu.MenuItem {
   output, err := cmd.Output()
   if err != nil {
     return []menu.MenuItem{
-      {Icon: "", Label: "Error loading fonts", Action: &menu.CommandAction{Command: "echo", Args: []string{"Failed to load fonts"}}},
+      {Icon: "󰀦", Label: "Error loading fonts", Action: &menu.CommandAction{Command: "echo", Args: []string{"Failed to load fonts"}}},
     }
   }
 
@@ -294,7 +294,7 @@ func FontMenu() []menu.MenuItem {
 
     label := menu.Checkmark(font, font == currentFont)
     items = append(items, menu.MenuItem{
-      Icon:   "",
+      Icon:   "",
       Label:  label,
       Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"font", "set", font}},
     })
@@ -340,8 +340,12 @@ func MonitorScalingMenu() []menu.MenuItem {
 
 // PowerProfileMenu - power profile selection
 func PowerProfileMenu() []menu.MenuItem {
+  currentProfile := menu.GetCurrentPowerProfile()
+  
   return []menu.MenuItem{
-    {Icon: "", Label: "TODO: Power profiles", Action: &menu.CommandAction{Command: "echo", Args: []string{"Power profile selection"}}},
+    {Icon: "󰓅", Label: menu.Checkmark("Performance", currentProfile == "performance"), Action: &menu.CommandAction{Command: "powerprofilesctl", Args: []string{"set", "performance"}}},
+    {Icon: "󰾅", Label: menu.Checkmark("Balanced", currentProfile == "balanced"), Action: &menu.CommandAction{Command: "powerprofilesctl", Args: []string{"set", "balanced"}}},
+    {Icon: "󰾆", Label: menu.Checkmark("Power Saver", currentProfile == "power-saver"), Action: &menu.CommandAction{Command: "powerprofilesctl", Args: []string{"set", "power-saver"}}},
   }
 }
 
