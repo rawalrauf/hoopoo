@@ -3,12 +3,24 @@ package main
 import (
   "os"
   "os/exec"
+  "path/filepath"
   "strconv"
   "strings"
 
   "hoopoo/pkg/hardware"
   "hoopoo/pkg/menu"
+  "hoopoo/pkg/system/paths"
 )
+
+// Menu action helpers
+
+// editConfigFile shows a notification and launches editor for a config file
+func editConfigFile(configPath string) error {
+  exec.Command("hoopoo", "notification", "send", "-u", "low", "--glyph=󰈙", "Editing config file", configPath).Run()
+  return exec.Command("hoopoo", "launch", "editor", configPath).Run()
+}
+
+// Menu definitions
 
 // MainMenu returns the main Hoopoo menu items (10 items - matching bash)
 func MainMenu() []menu.MenuItem {
@@ -323,7 +335,11 @@ func SetupMenu() []menu.MenuItem {
 func MonitorsMenu() []menu.MenuItem {
   return []menu.MenuItem{
     {Icon: "󰍹", Label: "Scale", Action: &menu.SubmenuAction{MenuFunc: MonitorScaleMenu}},
-    {Icon: "", Label: "Edit Config", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "editor", "~/.config/niri/monitors.kdl"}}},
+    {Icon: "󰹑", Label: "Resolution", Action: &menu.SubmenuAction{MenuFunc: MonitorResolutionMenu}},
+    {Icon: "󰑴", Label: "Transform", Action: &menu.SubmenuAction{MenuFunc: MonitorTransformMenu}},
+    {Icon: "", Label: "Edit Config", Action: &menu.FuncAction{Fn: func() error {
+      return editConfigFile(filepath.Join(paths.UserConfig(), "niri", "monitors.kdl"))
+    }}},
   }
 }
 
@@ -347,6 +363,10 @@ func MonitorSelectionMenu(action string) []menu.MenuItem {
     switch action {
     case "scale":
       return MonitorScaleValuesMenu("")
+    case "resolution":
+      return MonitorResolutionValuesMenu("")
+    case "transform":
+      return MonitorTransformValuesMenu("")
     default:
       return []menu.MenuItem{}
     }
@@ -362,6 +382,14 @@ func MonitorSelectionMenu(action string) []menu.MenuItem {
     case "scale":
       submenuFunc = func() []menu.MenuItem {
         return MonitorScaleValuesMenu(outputName)
+      }
+    case "resolution":
+      submenuFunc = func() []menu.MenuItem {
+        return MonitorResolutionValuesMenu(outputName)
+      }
+    case "transform":
+      submenuFunc = func() []menu.MenuItem {
+        return MonitorTransformValuesMenu(outputName)
       }
     }
     
@@ -392,6 +420,88 @@ func MonitorScaleValuesMenu(output string) []menu.MenuItem {
     {Icon: "", Label: menu.Checkmark("1.25", current == "1.25"), Action: &menu.CommandAction{Command: "hoopoo", Args: append(baseArgs, "1.25")}},
     {Icon: "", Label: menu.Checkmark("1.5", current == "1.5"), Action: &menu.CommandAction{Command: "hoopoo", Args: append(baseArgs, "1.5")}},
     {Icon: "", Label: menu.Checkmark("2.0", current == "2"), Action: &menu.CommandAction{Command: "hoopoo", Args: append(baseArgs, "2")}},
+  }
+}
+
+// MonitorResolutionMenu - smart routing: show monitor selection if multiple monitors, else show resolution values directly
+func MonitorResolutionMenu() []menu.MenuItem {
+  if !menu.HasExternalMonitors() {
+    return MonitorResolutionValuesMenu("")
+  }
+  return MonitorSelectionMenu("resolution")
+}
+
+// MonitorResolutionValuesMenu - show available resolutions for a specific monitor
+func MonitorResolutionValuesMenu(output string) []menu.MenuItem {
+  // Get the target output
+  targetOutput := output
+  if targetOutput == "" {
+    var err error
+    targetOutput, err = menu.GetDefaultOutput()
+    if err != nil {
+      return []menu.MenuItem{
+        {Icon: "", Label: "Error: No output found", Action: &menu.CommandAction{Command: "true"}},
+      }
+    }
+  }
+  
+  // Get available modes and current resolution
+  modes, err := menu.GetAvailableResolutions(targetOutput)
+  if err != nil || len(modes) == 0 {
+    return []menu.MenuItem{
+      {Icon: "", Label: "No resolutions available", Action: &menu.CommandAction{Command: "true"}},
+    }
+  }
+  
+  current := menu.GetCurrentMonitorResolution(targetOutput)
+  
+  var items []menu.MenuItem
+  for _, displayMode := range modes {
+    // Get the original mode string for this display mode
+    originalMode, err := menu.GetOriginalResolution(targetOutput, displayMode)
+    if err != nil {
+      originalMode = displayMode // Fallback to display mode if lookup fails
+    }
+    
+    items = append(items, menu.MenuItem{
+      Icon:   "",
+      Label:  menu.Checkmark(displayMode, displayMode == current),
+      Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"niri", "monitor", "resolution", "set", "--output", targetOutput, originalMode}},
+    })
+  }
+  
+  return items
+}
+
+// MonitorTransformMenu - smart routing: show monitor selection if multiple monitors, else show transform values directly
+func MonitorTransformMenu() []menu.MenuItem {
+  if !menu.HasExternalMonitors() {
+    return MonitorTransformValuesMenu("")
+  }
+  return MonitorSelectionMenu("transform")
+}
+
+// MonitorTransformValuesMenu - show transform options for a specific monitor
+func MonitorTransformValuesMenu(output string) []menu.MenuItem {
+  // Get the target output
+  targetOutput := output
+  if targetOutput == "" {
+    var err error
+    targetOutput, err = menu.GetDefaultOutput()
+    if err != nil {
+      return []menu.MenuItem{
+        {Icon: "", Label: "Error: No output found", Action: &menu.CommandAction{Command: "true"}},
+      }
+    }
+  }
+  
+  current := menu.GetCurrentMonitorTransform(targetOutput)
+  
+  return []menu.MenuItem{
+    {Icon: "", Label: menu.Checkmark("Normal", current == "normal"), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"niri", "monitor", "transform", "set", "--output", targetOutput, "normal"}}},
+    {Icon: "󰑴", Label: menu.Checkmark("90°", current == "90"), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"niri", "monitor", "transform", "set", "--output", targetOutput, "90"}}},
+    {Icon: "󰑴", Label: menu.Checkmark("180°", current == "180"), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"niri", "monitor", "transform", "set", "--output", targetOutput, "180"}}},
+    {Icon: "󰑴", Label: menu.Checkmark("270°", current == "270"), Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"niri", "monitor", "transform", "set", "--output", targetOutput, "270"}}},
   }
 }
 

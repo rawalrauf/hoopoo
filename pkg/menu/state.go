@@ -233,3 +233,22 @@ func HasExternalMonitors() bool {
 func GetAllOutputNames() ([]string, error) {
   return niri.GetAllOutputs()
 }
+
+// GetDefaultOutput returns the default output (eDP first, then focused)
+func GetDefaultOutput() (string, error) {
+  output, err := niri.GetInternalDisplay()
+  if err != nil {
+    return niri.GetFocusedOutput()
+  }
+  return output, nil
+}
+
+// GetAvailableResolutions returns all available resolutions for a specific output (display strings)
+func GetAvailableResolutions(output string) ([]string, error) {
+  return niri.GetAvailableModesDisplay(output)
+}
+
+// GetOriginalResolution returns the original mode string for a display mode
+func GetOriginalResolution(output, displayMode string) (string, error) {
+  return niri.GetOriginalMode(output, displayMode)
+}

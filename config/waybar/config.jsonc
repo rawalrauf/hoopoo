@@ -74,6 +74,7 @@
   "niri/window": {
     "format": "{title}",
     "tooltip": false,
+    "separate-outputs": true
   },
   "cpu": {
     "interval": 2,

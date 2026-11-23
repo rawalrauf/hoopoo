@@ -153,14 +153,44 @@ func parseConfigFile(configPath, file string) (*kdl.Document, error) {
 		return nil, fmt.Errorf("failed to parse %s: %w", file, err)
 	}
 
+	// Preserve quotes on all string properties
+	normalizeStringQuotes(doc)
+
 	return doc, nil
+}
+
+// normalizeStringQuotes ensures all string values have quote literals preserved
+func normalizeStringQuotes(doc *kdl.Document) {
+	for _, node := range doc.Nodes {
+		normalizeNodeStringQuotes(node)
+	}
+}
+
+// normalizeNodeStringQuotes recursively normalizes string quotes in a node and its children
+func normalizeNodeStringQuotes(node *kdl.Node) {
+	// Normalize arguments - check if it's a string value
+	for i, arg := range node.Arguments() {
+		// Check if the value has a literal representation (quotes)
+		if _, hasLiteral := arg.Literal(); !hasLiteral {
+			// If it's a string without literal, add quotes
+			str := arg.String()
+			node.SetArg(i, kdl.NewString(str).WithLiteral(`"`+str+`"`))
+		}
+	}
+	
+	// Normalize children
+	if children := node.Children(); children != nil {
+		for _, child := range children.Nodes {
+			normalizeNodeStringQuotes(child)
+		}
+	}
 }
 
 // writeConfigFile formats and writes a KDL document to file
 func writeConfigFile(configPath string, doc *kdl.Document, file string) error {
 	output, err := kdl.FormatToString(doc,
 		kdl.WithFormatIndentStr("\t"),
-		kdl.WithFormatMaxLineLen(20), // Force multi-line formatting for blocks
+		kdl.WithFormatMaxLineLen(100), // Allow reasonable line length for property values
 	)
 	if err != nil {
 		return fmt.Errorf("failed to format %s: %w", file, err)
@@ -233,7 +263,7 @@ func setOrUpdateProperty(targetNode *kdl.Node, property, value string) {
 		if value == "off" || value == "on" {
 			propertyNode = kdl.NewNode(property)
 		} else {
-			val := parseValue(value)
+			val := parseValue(property, value)
 			propertyNode = kdl.NewNode(property, val)
 		}
 		targetNode.AddChild(propertyNode)
@@ -246,7 +276,7 @@ func setOrUpdateProperty(targetNode *kdl.Node, property, value string) {
 			}
 		} else {
 			// Update the value
-			val := parseValue(value)
+			val := parseValue(property, value)
 			if len(propertyNode.Arguments()) > 0 {
 				propertyNode.SetArg(0, val)
 			} else {
@@ -264,25 +294,18 @@ func getConfigPath(file string) (string, error) {
 	return filepath.Join(homeDir, ".config", "niri", file), nil
 }
 
-func parseValue(value string) kdl.Value {
-	// Try to parse as float
-	if strings.Contains(value, ".") {
+func parseValue(property, value string) kdl.Value {
+	// Scale should always be a float (even "1" should become 1.0)
+	if property == "scale" {
 		var f float64
 		if _, err := fmt.Sscanf(value, "%f", &f); err == nil {
 			return kdl.NewFloat(f)
 		}
 	}
 	
-	// Try to parse as int  
-	if !strings.Contains(value, ".") && !strings.Contains(value, "\"") {
-		var i int
-		if _, err := fmt.Sscanf(value, "%d", &i); err == nil {
-			return kdl.NewInt(i)
-		}
-	}
-	
-	// Default to string
-	return kdl.NewString(value)
+	// Transform, mode, and other properties should always be quoted strings
+	// Even if they look like numbers (e.g., "90", "180", "270")
+	return kdl.NewString(value).WithLiteral(`"` + value + `"`)
 }
 
 // fixSlashdashQuotes re-quotes identifiers in slashdashed blocks
