@@ -310,7 +310,7 @@ func SetupMenu() []menu.MenuItem {
     {Icon: "", Label: "Wifi", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "wifi"}}},
     {Icon: "󰂯", Label: "Bluetooth", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "bluetooth"}}},
     {Icon: "󱐋", Label: "Power Profile", Action: &menu.SubmenuAction{MenuFunc: PowerProfileMenu}},
-    {Icon: "", Label: "System Sleep", Action: &menu.CommandAction{Command: "echo", Args: []string{"TODO: System sleep menu"}}},
+    {Icon: "", Label: "System Sleep", Action: &menu.SubmenuAction{MenuFunc: SystemSleepMenu}},
     {Icon: "󰍹", Label: "Monitors", Action: &menu.SubmenuAction{MenuFunc: MonitorsMenu}},
     {Icon: "", Label: "Defaults", Action: &menu.SubmenuAction{MenuFunc: DefaultsMenu}},
     {Icon: "󰱔", Label: "DNS", Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"setup", "dns"}}},
@@ -347,6 +347,43 @@ func PowerProfileMenu() []menu.MenuItem {
     {Icon: "󰾅", Label: menu.Checkmark("Balanced", currentProfile == "balanced"), Action: &menu.CommandAction{Command: "powerprofilesctl", Args: []string{"set", "balanced"}}},
     {Icon: "󰾆", Label: menu.Checkmark("Power Saver", currentProfile == "power-saver"), Action: &menu.CommandAction{Command: "powerprofilesctl", Args: []string{"set", "power-saver"}}},
   }
+}
+
+// SystemSleepMenu - suspend and hibernation configuration
+func SystemSleepMenu() []menu.MenuItem {
+  items := []menu.MenuItem{}
+  
+  // Suspend toggle
+  if menu.IsSuspendDisabled() {
+    items = append(items, menu.MenuItem{
+      Icon:   "󰒲",
+      Label:  "Enable Suspend",
+      Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"toggle", "suspend"}},
+    })
+  } else {
+    items = append(items, menu.MenuItem{
+      Icon:   "󰒲",
+      Label:  "Disable Suspend",
+      Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"toggle", "suspend"}},
+    })
+  }
+  
+  // Hibernation setup/remove
+  if menu.IsHibernationAvailable() {
+    items = append(items, menu.MenuItem{
+      Icon:   "󰤁",
+      Label:  "Disable Hibernate",
+      Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "floating", "terminal", "with", "presentation", "hoopoo hibernation remove"}},
+    })
+  } else {
+    items = append(items, menu.MenuItem{
+      Icon:   "󰤁",
+      Label:  "Enable Hibernate",
+      Action: &menu.CommandAction{Command: "hoopoo", Args: []string{"launch", "floating", "terminal", "with", "presentation", "hoopoo hibernation setup"}},
+    })
+  }
+  
+  return items
 }
 
 // SecurityMenu - security settings
