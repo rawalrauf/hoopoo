@@ -8,7 +8,6 @@ import (
   
   "hoopoo/pkg/media/recorder"
   "hoopoo/pkg/media/video"
-  "hoopoo/pkg/notification"
   "hoopoo/pkg/system/process"
 )
 
@@ -30,12 +29,12 @@ func main() {
   
   // Check directory exists
   if _, err := os.Stat(outputDir); os.IsNotExist(err) {
-    notification.Send(notification.Options{
-      Glyph:       "󰀦",
-      Headline:    "Screen recording directory does not exist: " + outputDir,
-      Urgency:     "critical",
-      Timeout:     3000,
-    })
+    exec.Command("hoopoo", "notification", "send",
+      "--glyph=󰀦",
+      "Screen recording directory does not exist: " + outputDir,
+      "-u", "critical",
+      "-t", "3000",
+    ).Run()
     os.Exit(1)
   }
   
@@ -78,13 +77,13 @@ func main() {
   // Start webcam overlay if requested
   if opts.Webcam {
     if err := recorder.StartWebcamOverlay(opts.WebcamDevice); err != nil {
-      notification.Send(notification.Options{
-        Glyph:       "󰀦",
-        Headline:    "Failed to start webcam overlay",
-        Description: err.Error(),
-        Urgency:     "critical",
-        Timeout:     3000,
-      })
+      exec.Command("hoopoo", "notification", "send",
+        "--glyph=󰀦",
+        "Failed to start webcam overlay",
+        err.Error(),
+        "-u", "critical",
+        "-t", "3000",
+      ).Run()
       os.Exit(1)
     }
   }
@@ -96,13 +95,13 @@ func main() {
   filename, err := recorder.Start(opts)
   if err != nil {
     recorder.StopWebcamOverlay()
-    notification.Send(notification.Options{
-      Glyph:       "󰀦",
-      Headline:    "Failed to start recording",
-      Description: err.Error(),
-      Urgency:     "critical",
-      Timeout:     3000,
-    })
+    exec.Command("hoopoo", "notification", "send",
+      "--glyph=󰀦",
+      "Failed to start recording",
+      err.Error(),
+      "-u", "critical",
+      "-t", "3000",
+    ).Run()
     os.Exit(1)
   }
   
@@ -123,13 +122,13 @@ func stopAndNotify() {
   recorder.StopWebcamOverlay()
   
   if err != nil {
-    notification.Send(notification.Options{
-      Glyph:       "󰀦",
-      Headline:    "Screen recording error",
-      Description: "Recording was force-killed. Video may be corrupted.",
-      Urgency:     "critical",
-      Timeout:     5000,
-    })
+    exec.Command("hoopoo", "notification", "send",
+      "--glyph=󰀦",
+      "Screen recording error",
+      "Recording was force-killed. Video may be corrupted.",
+      "-u", "critical",
+      "-t", "5000",
+    ).Run()
     recorder.DeleteRecordingFile()
     return
   }
