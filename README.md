@@ -4,4 +4,4 @@ Hoopoo is an opinionated Arch Linux distribution built on the Niri window manage
 
 ## License
 
-Hoopoo is released under the [MIT License](https://opensource.org/licenses/MIT).
+Hoopoo is released under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
